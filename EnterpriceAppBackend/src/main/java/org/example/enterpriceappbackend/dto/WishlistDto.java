@@ -14,7 +14,7 @@ import java.util.List;
 public class WishlistDto {
 
     private Long id;
-    private Long proprietarioId;
+    private Long utenteId;
     private Boolean visibilita;
     private LocalDate dataCreazione;
     private List<Evento> eventi;

@@ -8,13 +8,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Wishlist")
+@Table(name = "Wishlist") //nome tabella database
 @Data
 @NoArgsConstructor
 public class Wishlist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID")
+    @Column(name = "id")
     private Long id;
 
     @Column(name="visibilità")
@@ -24,11 +24,11 @@ public class Wishlist {
     @Column(name = "dataCreazione")
     private LocalDateTime dataCreazione;
 
-    @OneToOne
-    @JoinColumn(name = "proprietario_id", nullable = false, unique = true)
-    private Utente proprietario;
+    @OneToOne //relazione con tabella Utente 1:1 viene unita tramite id
+    @JoinColumn(name = "utente_id", referencedColumnName = "id", unique = true)
+    private Utente utente;
 
-    @ManyToMany
+    @ManyToMany //relazione N:N si crea una nuova tabella wl_ev con le chiavi esterne
     @JoinTable(
             name = "wl_ev",
             joinColumns = @JoinColumn(name = "wishlist_id"),

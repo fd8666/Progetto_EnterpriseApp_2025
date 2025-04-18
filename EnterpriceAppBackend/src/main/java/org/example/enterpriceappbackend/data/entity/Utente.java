@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 
 @Entity
 @Table(name = "Utente")
@@ -12,13 +14,13 @@ import lombok.NoArgsConstructor;
 public class Utente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID")
+    @Column(name = "id")
     private Long id;
 
+    @OneToMany(mappedBy = "organizzatore")
+    private List<Evento> eventi;
 
-
-
-    @OneToOne(mappedBy = "proprietario")
+    @OneToOne(mappedBy = "utente")
     private Wishlist wishlist;
 
 

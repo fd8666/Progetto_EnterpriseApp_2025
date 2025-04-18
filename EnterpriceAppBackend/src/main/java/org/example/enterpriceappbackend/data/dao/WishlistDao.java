@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface WishlistDao extends JpaRepository<Wishlist, Long> , JpaSpecificationExecutor<Wishlist> {
-    List<Wishlist> findByProprietario(Utente proprietario);
-    List<Wishlist> findByProprietarioAndVisibilita(Utente proprietario, String visibilita);
+    List<Wishlist> findByUtente(Utente utente);
+    List<Wishlist> findByUtenteAndVisibilita(Utente utente, String visibilita);
 
 }
