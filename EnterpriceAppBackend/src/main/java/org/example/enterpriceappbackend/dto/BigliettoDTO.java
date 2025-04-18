@@ -3,20 +3,19 @@ package org.example.enterpriceappbackend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.enterpriceappbackend.data.entity.Evento;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WishlistDto {
-
+public class BigliettoDTO {
     private Long id;
-    private Long utenteId;
-    private Boolean visibilita;
+    private String nomeSpettatore;
+    private String cognomeSpettatore;
+    private String emailSpettatore;
     private LocalDate dataCreazione;
-    private List<Evento> eventi;
-
+    private Long eventoId;
+    private Long zonaId;
+    private Long pagamentoId;
 }
