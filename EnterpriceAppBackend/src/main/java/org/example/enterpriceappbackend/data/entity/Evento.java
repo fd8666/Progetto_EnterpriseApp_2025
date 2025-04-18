@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class Evento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "nome", nullable = true)
@@ -21,9 +22,9 @@ public class Evento {
     @Column(name = "descrizione", nullable = true)
     private String descrizione;
 
-//    @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con TagCategoria
-//    @JoinColumn(name = "categoria_id", nullable = false)
-//    private TagCategoria categoria;
+    @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con TagCategoriaDto
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private TagCategoria categoria;
 
     @Column(name = "immagine", nullable = true)
     private String immagine;

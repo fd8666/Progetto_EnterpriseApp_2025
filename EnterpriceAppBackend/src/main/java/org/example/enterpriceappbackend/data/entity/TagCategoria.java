@@ -6,25 +6,23 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
 @Entity
-@Table(name = "Utente")
+@Table(name = "TagCategoria")
 @Data
 @NoArgsConstructor
-public class Utente {
+public class TagCategoria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @OneToMany(mappedBy = "organizzatore",cascade = CascadeType.ALL)
+    @Column(name = "nome", nullable = true)
+    private String nome;
+
+    @Column(name = "descrizione", nullable = true)
+    private String descrizione;
+
+    @OneToMany(mappedBy = "categoria",cascade = CascadeType.ALL)
     private List<Evento> eventi;
-
-    @OneToOne(mappedBy = "utente",cascade = CascadeType.ALL)
-    private Wishlist wishlist;
-
-
-
-
 
 }
