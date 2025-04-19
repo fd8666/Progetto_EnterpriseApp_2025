@@ -13,8 +13,8 @@
     <groupId>org.example</groupId>
     <artifactId>EnterpriceAppBackend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>EnterpriceAppBackend</name>
-    <description>EnterpriceAppBackend</description>
+    <name>EnterpriseAppBackend</name>
+    <description>EnterpriseAppBackend</description>
 
     <properties>
         <java.version>17</java.version>
@@ -44,6 +44,7 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.3</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Spring Boot Mail Starter (se vuoi gestire l'invio di email) -->
@@ -71,6 +72,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- annotazioni di validazione -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
         </dependency>
 
         <!-- Test Dependencies -->

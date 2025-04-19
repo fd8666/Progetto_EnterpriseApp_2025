@@ -2,20 +2,25 @@ package org.example.enterpriceappbackend.data.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "biglietti")
-@Data
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "Biglietto")
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Biglietto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @Column(name = "id")
+    private Long id;
 
     @Column(name = "nome_spettatore", nullable = false)
     private String nomeSpettatore;
@@ -26,20 +31,19 @@ public class Biglietto {
     @Column(name = "email_spettatore")
     private String emailSpettatore;
 
-    @Column(name = "data_creazione", nullable = false)
-    private LocalDateTime dataCreazione;
-
     @ManyToOne
-    @JoinColumn(name = "evento_id", nullable = false)
+    @JoinColumn(name = "evento_id", referencedColumnName = "id", nullable = false)
     private Evento evento;
 
-    /*
     @ManyToOne
-    @JoinColumn(name = "zona_id", nullable = false)
-    private Zona zona;
-    */
+    @JoinColumn(name = "tipoPosto_id", referencedColumnName = "id", nullable = false)
+    private TipoPosto tipoPosto;
 
     @ManyToOne
-    @JoinColumn(name = "pagamento_id", nullable = false)
+    @JoinColumn(name = "pagamento_id", referencedColumnName = "id")//opzionale in caso di pagamento non ancora effettuato
     private Pagamento pagamento;
+
+    @CreatedDate
+    @Column(name = "dataCreazione", updatable = false)
+    private LocalDateTime dataCreazione;
 }
