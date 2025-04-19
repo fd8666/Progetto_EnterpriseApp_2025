@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class BigliettiInfoDettagliatiDto {//per una schermata dedicata olo ad un biglietto in cui ci sono tutte le info piu ampie
+public class BigliettiInfoDettagliatiDTO {//per una schermata dedicata olo ad un biglietto in cui ci sono tutte le info piu ampie
                                           // complete come evento posizione ecc e tipoposto con features descrizione ecc non solo un nome
     private Long id;
     private String nomeSpettatore;

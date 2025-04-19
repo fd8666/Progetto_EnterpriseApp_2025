@@ -1,15 +1,15 @@
 package org.example.enterpriceappbackend.data.service;
 
-import org.example.enterpriceappbackend.dto.WishlistDto;
+import org.example.enterpriceappbackend.dto.WishlistDTO;
 
 import java.util.List;
 
 public interface WishlistService {
-    WishlistDto findById(Long id);
-    List<WishlistDto> findByUtente(Long utenteId);
-    List<WishlistDto> findByUtenteAndVisibilita(Long utenteId, String visibilita);
-    WishlistDto save(WishlistDto wishlistDTO);
-    WishlistDto update(Long id, WishlistDto wishlistDTO);
+    WishlistDTO findById(Long id);
+    List<WishlistDTO> findByUtente(Long utenteId);
+    List<WishlistDTO> findByUtenteAndVisibilita(Long utenteId, String visibilita);
+    WishlistDTO save(WishlistDTO wishlistDTO);
+    WishlistDTO update(Long id, WishlistDTO wishlistDTO);
     void delete(Long id);
 
 }

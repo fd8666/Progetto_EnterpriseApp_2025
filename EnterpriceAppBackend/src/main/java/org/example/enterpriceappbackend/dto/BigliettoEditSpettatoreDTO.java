@@ -1,10 +1,14 @@
 package org.example.enterpriceappbackend.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class BigliettoCreateDto {//per la creazione dei vari biglietti
+public class BigliettoEditSpettatoreDTO {
+
     @NotBlank(message = "Il nome dello spettatore è campo obbligatorio!")
     @Size(min = 3, max = 30)
     @Pattern(regexp = "^[A-Za-zÀ-ÖØ-öø-ÿ]+(?: [A-Za-zÀ-ÖØ-öø-ÿ]+)*$", message = "Il nome deve contenere solo lettere e spazi.")
@@ -18,9 +22,4 @@ public class BigliettoCreateDto {//per la creazione dei vari biglietti
     @Email
     private String emailSpettatore;
 
-    @NotNull
-    private Long eventoId;
-
-    @NotNull
-    private Long postoId;
 }

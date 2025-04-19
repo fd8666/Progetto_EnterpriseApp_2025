@@ -2,7 +2,7 @@ package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 
 import lombok.RequiredArgsConstructor;
-import org.example.enterpriceappbackend.data.repository.BigliettoDao;
+import org.example.enterpriceappbackend.data.repository.BigliettoRepository;
 import org.example.enterpriceappbackend.data.service.BigliettoService;
 import org.springframework.stereotype.Service;
 
@@ -10,5 +10,5 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class BigliettoServiceImpl implements BigliettoService {
 
-    private final BigliettoDao bigliettoDao;
+    private final BigliettoRepository bigliettoRepository;
 }

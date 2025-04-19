@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.enterpriceappbackend.data.entity.Biglietto;
-import org.example.enterpriceappbackend.data.entity.StatoPagamento;
+import org.example.enterpriceappbackend.data.constants.StatoPagamento;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,6 +24,6 @@ public class PagamentoDTO {
     private LocalDate dataPagamento;
     private StatoPagamento stato;
     private Long ordineId;
-    private List<BigliettoInfoDto> bigliettiInfo;
+    private List<BigliettoInfoDTO> bigliettiInfo;
     private List<Biglietto> biglietti;
 }

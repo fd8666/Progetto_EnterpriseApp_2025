@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ZonaDao extends JpaRepository<Zona, Long>{
+public interface ZonaRepository extends JpaRepository<Zona, Long>{
 
     Optional<Zona> findById(Long id);
 

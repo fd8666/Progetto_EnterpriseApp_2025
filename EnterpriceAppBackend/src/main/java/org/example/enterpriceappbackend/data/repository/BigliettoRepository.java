@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface BigliettoDao extends JpaRepository<Biglietto, Long> {
+public interface BigliettoRepository extends JpaRepository<Biglietto, Long> {
 
     Optional<Biglietto> findById(Long id);
 

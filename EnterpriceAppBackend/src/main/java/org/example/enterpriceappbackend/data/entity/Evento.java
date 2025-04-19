@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "Evento")
@@ -37,12 +38,22 @@ public class Evento {
     @Column(name = "luogo", nullable = false)
     private String luogo;
 
-    @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con Utente(Organizzatore)
+    @ManyToOne //crea una tabella con la relazione ManyToOne con Utente(Organizzatore)
     @JoinColumn(name = "organizzatore_id", referencedColumnName = "id", nullable = false)
     private Utente organizzatore;
 
-    @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con TagCategoriaDto
+    @ManyToOne //crea una tabella con la relazione ManyToOne con TagCategoriaDTO
     @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = false)
     private TagCategoria categoria;
 
+    @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
+    private List<Biglietto> biglietti;
+
+    @ManyToMany //relazione N:N con struttura join
+    @JoinTable(
+            name = "ev_st",
+            joinColumns = @JoinColumn(name = "evento_id"),
+            inverseJoinColumns = @JoinColumn(name = "struttura_id")
+    )
+    private List<Struttura> strutture;
 }

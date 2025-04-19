@@ -39,4 +39,8 @@ public class Struttura {
     @OneToMany(mappedBy = "struttura", cascade = CascadeType.ALL,fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Zona> zone;
 
+    @ManyToMany(mappedBy = "strutture")
+    private List<Evento> eventi;
+
+
 }

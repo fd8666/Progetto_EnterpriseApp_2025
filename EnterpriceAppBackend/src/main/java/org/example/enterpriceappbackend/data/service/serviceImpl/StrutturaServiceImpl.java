@@ -1,7 +1,7 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 import lombok.RequiredArgsConstructor;
-import org.example.enterpriceappbackend.data.repository.StrutturaDao;
+import org.example.enterpriceappbackend.data.repository.StrutturaRepository;
 import org.example.enterpriceappbackend.data.service.StrutturaService;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StrutturaServiceImpl implements StrutturaService {
 
-    private final StrutturaDao strutturaDao;
+    private final StrutturaRepository strutturaRepository;
 
 }

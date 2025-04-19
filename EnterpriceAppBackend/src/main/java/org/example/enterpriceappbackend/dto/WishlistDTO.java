@@ -5,17 +5,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.enterpriceappbackend.data.entity.Evento;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TagCategoriaDto {
+public class WishlistDTO {
 
     private Long id;
-    private String nome;
-    private String descrizione;
+    private Long utenteId;
+    private Boolean visibilita;
+    private LocalDate dataCreazione;
     private List<Evento> eventi;
-
 
 }

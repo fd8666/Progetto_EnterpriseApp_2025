@@ -3,6 +3,7 @@ package org.example.enterpriceappbackend.data.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.enterpriceappbackend.data.constants.Visibilita;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class BigliettoInfoDto {//per la visualizzazione del biglietto semplice magari in una lista in cui
+public class BigliettoInfoDTO {//per la visualizzazione del biglietto semplice magari in una lista in cui
                                // voglio i principali attributi e nome evento ecc li prendo tramite l'id
     private Long id;
     private String nomeSpettatore;

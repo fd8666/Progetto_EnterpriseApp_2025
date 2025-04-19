@@ -39,6 +39,7 @@ public class Biglietto {
     @JoinColumn(name = "tipo_posto_id", referencedColumnName = "id", nullable = false)
     private TipoPosto tipoPosto;
 
+
     @ManyToOne
     @JoinColumn(name = "pagamento_id", referencedColumnName = "id")//opzionale in caso di pagamento non ancora effettuato
     private Pagamento pagamento;

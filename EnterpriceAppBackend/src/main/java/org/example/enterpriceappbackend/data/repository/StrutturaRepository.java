@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StrutturaDao extends JpaRepository<Struttura, Long>{
+public interface StrutturaRepository extends JpaRepository<Struttura, Long>{
 
     //per ottenere le strutture da parte dell'utente quando ne cerca una specifica dell'evento
     Optional<Struttura> findById(Long id);

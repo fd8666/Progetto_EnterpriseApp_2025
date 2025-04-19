@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class StrutturaInfoOrganizzatoreDto { //per la visione descrittiva della struttura da parte di organizzatore (compresa quindi descrizione e lista dettagliata zone)
+public class StrutturaInfoOrganizzatoreDTO { //per la visione descrittiva della struttura da parte di organizzatore (compresa quindi descrizione e lista dettagliata zone)
 
     private Long id;
     private String nome;
@@ -16,6 +16,6 @@ public class StrutturaInfoOrganizzatoreDto { //per la visione descrittiva della 
     private String coordinateLatitude;
     private String coordinateLongitude;
 
-    private List<ZonaInfoDto> zone;
+    private List<ZonaInfoDTO> zone;
 
 }
