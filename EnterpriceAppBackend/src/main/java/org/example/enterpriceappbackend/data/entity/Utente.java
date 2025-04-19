@@ -5,11 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.io.Serializable;
-import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -19,22 +15,26 @@ import java.util.List;
 @Entity
 @Table(name = "Utente")
 public class Utente{
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String firstName;
+    @Column(name = "nome", nullable = false)
+    private String nome;
 
-    @Column(nullable = false)
-    private String lastName;
+    @Column(name = "cognome", nullable = false)
+    private String cognome;
+
+    @Column(name = "numero_telefono")
+    private String numeroTelefono;
 
     @Enumerated(EnumType.STRING)
     private Role role;

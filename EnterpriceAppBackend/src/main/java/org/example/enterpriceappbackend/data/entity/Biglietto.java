@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Biglietto {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -36,7 +36,7 @@ public class Biglietto {
     private Evento evento;
 
     @ManyToOne
-    @JoinColumn(name = "tipoPosto_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "tipo_posto_id", referencedColumnName = "id", nullable = false)
     private TipoPosto tipoPosto;
 
     @ManyToOne
@@ -44,6 +44,7 @@ public class Biglietto {
     private Pagamento pagamento;
 
     @CreatedDate
-    @Column(name = "dataCreazione", updatable = false)
+    @Column(name = "data_creazione", updatable = false)
     private LocalDateTime dataCreazione;
+
 }

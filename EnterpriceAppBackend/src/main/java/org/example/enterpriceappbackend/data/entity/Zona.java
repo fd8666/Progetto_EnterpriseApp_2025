@@ -9,6 +9,7 @@ import lombok.Setter;
 @Table(name= "Zona")
 @Getter @Setter
 public class Zona {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -21,12 +22,11 @@ public class Zona {
     @Size(max = 5000)
     private String descrizione;
 
-    @Column(name = "totalePosti")
+    @Column(name = "totale_posti")
     private Integer totalePosti;
 
     @ManyToOne(optional = false)
     @JoinColumn(name="struttura_id", referencedColumnName = "id", nullable = false)
     private Struttura struttura;
-
 
 }

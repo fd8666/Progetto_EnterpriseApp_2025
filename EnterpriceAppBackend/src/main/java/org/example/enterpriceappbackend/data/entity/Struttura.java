@@ -1,10 +1,8 @@
 package org.example.enterpriceappbackend.data.entity;
 
 import jakarta.persistence.*;
-
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.List;
 
 @Entity
@@ -32,12 +30,13 @@ public class Struttura {
     @Column(name = "indirizzo")
     private String indirizzo;
 
-    @Column(name = "coordinateLat")
+    @Column(name = "coordinate_lat")
     private String coordinateLatitude;
 
-    @Column(name = "coordinateLong")
+    @Column(name = "coordinate_long")
     private String coordinateLongitude;
 
     @OneToMany(mappedBy = "struttura", cascade = CascadeType.ALL,fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Zona> zone;
+
 }

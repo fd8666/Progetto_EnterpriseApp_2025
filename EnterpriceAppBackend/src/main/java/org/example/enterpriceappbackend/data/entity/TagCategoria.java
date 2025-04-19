@@ -3,7 +3,6 @@ package org.example.enterpriceappbackend.data.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 @Entity
@@ -11,6 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class TagCategoria {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

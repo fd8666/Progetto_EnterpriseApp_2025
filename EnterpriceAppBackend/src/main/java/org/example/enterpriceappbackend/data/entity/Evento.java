@@ -3,7 +3,6 @@ package org.example.enterpriceappbackend.data.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 public class Evento {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -21,10 +21,6 @@ public class Evento {
 
     @Column(name = "descrizione", nullable = true)
     private String descrizione;
-
-    @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con TagCategoriaDto
-    @JoinColumn(name = "categoria_id", nullable = false)
-    private TagCategoria categoria;
 
     @Column(name = "immagine", nullable = true)
     private String immagine;
@@ -42,6 +38,11 @@ public class Evento {
     private String luogo;
 
     @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con Utente(Organizzatore)
-    @JoinColumn(name = "organizzatore_id", nullable = false)
+    @JoinColumn(name = "organizzatore_id", referencedColumnName = "id", nullable = false)
     private Utente organizzatore;
+
+    @ManyToOne(fetch = FetchType.LAZY) //crea una tabella con la relazione ManyToOne con TagCategoriaDto
+    @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = false)
+    private TagCategoria categoria;
+
 }

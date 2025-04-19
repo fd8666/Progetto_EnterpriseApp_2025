@@ -12,6 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class Wishlist {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -35,9 +36,5 @@ public class Wishlist {
             inverseJoinColumns = @JoinColumn(name = "evento_id")
     )
     private List<Evento> eventi;
-
-
-
-
 
 }

@@ -4,19 +4,20 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "pagamenti")
+@Table(name = "Pagamento")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Pagamento {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "nome_titolare", nullable = false)
@@ -28,13 +29,13 @@ public class Pagamento {
     @Column(name = "numero_carta", nullable = false)
     private String numeroCarta;
 
-    @Column(nullable = false)
-    private String scadenza;
+    @Column(name = "scadenza", nullable = false)
+    private LocalDateTime scadenza;
 
-    @Column(nullable = false)
+    @Column(name = "cvv", nullable = false)
     private String cvv;
 
-    @Column(nullable = false)
+    @Column(name = "importo", nullable = false)
     private BigDecimal importo;
 
     @Column(name = "data_pagamento", nullable = false)
@@ -45,9 +46,10 @@ public class Pagamento {
     private StatoPagamento stato;
 
     @ManyToOne
-    @JoinColumn(name = "ordine_id", nullable = false)
+    @JoinColumn(name = "ordine_id",referencedColumnName = "id", nullable = false)
     private Ordine ordine;
 
     @OneToMany(mappedBy = "pagamento", cascade = CascadeType.ALL)
     private List<Biglietto> biglietti;
+
 }
