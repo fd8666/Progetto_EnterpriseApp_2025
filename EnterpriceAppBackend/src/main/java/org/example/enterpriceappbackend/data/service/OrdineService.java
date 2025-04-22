@@ -1,6 +1,5 @@
 package org.example.enterpriceappbackend.data.service;
 
-import jakarta.transaction.Transactional;
 import org.example.enterpriceappbackend.data.entity.Ordine;
 import org.example.enterpriceappbackend.dto.OrdineDTO;
 
@@ -12,9 +11,9 @@ public interface OrdineService {
 
     List<OrdineDTO> findByProprietario(Long proprietarioId);
 
-    OrdineDTO save(OrdineDTO ordineDTO);
+    Long save(OrdineDTO ordineDTO);
 
-    OrdineDTO update(Long id, OrdineDTO ordineDTO);
+    OrdineDTO updateOrdineProdotti(Long id, OrdineDTO ordineDTO);
 
     void delete(Long id);
 
