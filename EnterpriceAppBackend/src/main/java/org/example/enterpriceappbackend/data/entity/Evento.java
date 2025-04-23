@@ -56,4 +56,7 @@ public class Evento {
             inverseJoinColumns = @JoinColumn(name = "struttura_id")
     )
     private List<Struttura> strutture;
+
+    @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
+    private List<TipoPosto> tipiPosto;
 }

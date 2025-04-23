@@ -38,4 +38,8 @@ public class Wishlist {
     )
     private List<Evento> eventi;
 
+
+    @OneToMany(mappedBy = "wishlist",cascade = CascadeType.ALL)
+    private List<WishlistCondivisa> condivisi;
+
 }

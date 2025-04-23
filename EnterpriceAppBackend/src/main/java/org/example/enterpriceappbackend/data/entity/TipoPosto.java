@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "TipoPosto")
 @Data
@@ -23,5 +25,12 @@ public class TipoPosto {
 
     @Column(name = "PostiDisponibili")
     private int postiDisponibili;
+
+    @ManyToOne
+    @JoinColumn(name = "evento_id",nullable = false)
+    private Evento evento;
+
+    @OneToMany(mappedBy = "tipoPosto",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Features> Features;
 
 }
