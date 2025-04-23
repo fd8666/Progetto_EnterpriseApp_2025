@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Entity
 @Table(name= "Zona")
 @Getter @Setter
@@ -28,5 +30,8 @@ public class Zona {
     @ManyToOne(optional = false)
     @JoinColumn(name="struttura_id", referencedColumnName = "id", nullable = false)
     private Struttura struttura;
+
+    @OneToMany (mappedBy = "zona",cascade = CascadeType.ALL)
+    private List<Features> features;
 
 }

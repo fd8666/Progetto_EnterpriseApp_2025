@@ -40,13 +40,6 @@ public class Utente{
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    /* implementare successivamente in security
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
-    }
-    */
-
     @OneToMany(mappedBy = "organizzatore",cascade = CascadeType.ALL)
     private List<Evento> eventi;
 

@@ -13,7 +13,8 @@ import lombok.NoArgsConstructor;
 public class UtenteDTO {
     private long id;
     private String email;
-    private String firstName;
-    private String lastName;
+    private String password;
+    private String nome;
+    private String cognome;
     private String role;
 }

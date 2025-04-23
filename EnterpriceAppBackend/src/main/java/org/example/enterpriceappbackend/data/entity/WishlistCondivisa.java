@@ -15,4 +15,12 @@ public class WishlistCondivisa {
     @Column(name = "id")
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "wishlist_id",nullable = false)
+    private Wishlist wishlist;
+
+    @ManyToOne
+    @JoinColumn(name = "utente_id",nullable = false)
+    private Utente condivisaCon;
+
 }
