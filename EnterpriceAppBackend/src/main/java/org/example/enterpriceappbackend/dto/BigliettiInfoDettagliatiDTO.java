@@ -12,7 +12,7 @@ public class BigliettiInfoDettagliatiDTO {//per una schermata dedicata olo ad un
     private String cognomeSpettatore;
     private String emailSpettatore;
 
-    private EventoDto evento;  // Dettagli completi dell'evento
+    private EventoDTO evento;  // Dettagli completi dell'evento
     //private TipoPostoDto tipoPosto; // Dettagli completi del tipo di posto
 
     private Long pagamentoId;
