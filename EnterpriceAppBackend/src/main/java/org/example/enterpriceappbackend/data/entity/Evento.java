@@ -1,5 +1,8 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,10 +43,12 @@ public class Evento {
 
     @ManyToOne //crea una tabella con la relazione ManyToOne con Utente(Organizzatore)
     @JoinColumn(name = "organizzatore_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private Utente organizzatore;
 
     @ManyToOne //crea una tabella con la relazione ManyToOne con TagCategoriaDTO
     @JoinColumn(name = "categoria_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference
     private TagCategoria categoria;
 
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)

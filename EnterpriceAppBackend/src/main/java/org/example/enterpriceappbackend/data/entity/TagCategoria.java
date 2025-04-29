@@ -1,5 +1,7 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,7 @@ public class TagCategoria {
     private String descrizione;
 
     @OneToMany(mappedBy = "categoria",cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Evento> eventi;
 
 }

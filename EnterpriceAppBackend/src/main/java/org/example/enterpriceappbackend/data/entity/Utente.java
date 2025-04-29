@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,6 +42,7 @@ public class Utente{
     private Role role;
 
     @OneToMany(mappedBy = "organizzatore",cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Evento> eventi;
 
     @OneToOne(mappedBy = "utente",cascade = CascadeType.ALL)

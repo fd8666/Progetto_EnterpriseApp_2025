@@ -3,7 +3,6 @@ package org.example.enterpriceappbackend.data.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.dto.EventoDTO;
 import org.example.enterpriceappbackend.data.service.EventoService;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
