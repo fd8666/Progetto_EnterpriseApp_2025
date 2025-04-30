@@ -89,14 +89,14 @@ public class EventoController {
     }
 
     // Aggiornamento di un evento
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<EventoDTO> updateEvento(@PathVariable Long id, @RequestBody EventoDTO eventoDTO) {
         EventoDTO updatedEvento = eventoService.update(id, eventoDTO);
         return new ResponseEntity<>(updatedEvento, HttpStatus.OK);
     }
 
     // Eliminazione di un evento
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteEvento(@PathVariable Long id) {
         eventoService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

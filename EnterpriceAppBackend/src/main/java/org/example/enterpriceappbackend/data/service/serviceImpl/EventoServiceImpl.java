@@ -177,7 +177,6 @@ public class EventoServiceImpl implements EventoService {
         evento.setStrutture(dto.getStrutture());
         evento.setTipiPosto(dto.getTipiPosto());
 
-
         if (dto.getOrganizzatoreId() != null) {
             Utente organizzatore = new Utente();
             organizzatore.setId(dto.getOrganizzatoreId());

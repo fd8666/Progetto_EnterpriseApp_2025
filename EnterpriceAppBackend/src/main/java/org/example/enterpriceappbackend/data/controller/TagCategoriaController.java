@@ -19,7 +19,7 @@ import java.util.List;
 public class TagCategoriaController {
     private final TagCategoriaService tagCategoriaService;
 
-    // Recupero di un evento per ID
+
     @GetMapping("/{id}")
     public ResponseEntity<TagCategoriaDTO> findCategoriaById(@PathVariable Long id) {
         TagCategoriaDTO tagCategoriaDTO = tagCategoriaService.findById(id);

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.example.enterpriceappbackend.data.constants.Visibilita;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -36,7 +37,7 @@ public class Wishlist {
             joinColumns = @JoinColumn(name = "wishlist_id"),
             inverseJoinColumns = @JoinColumn(name = "evento_id")
     )
-    private List<Evento> eventi;
+    private List<Evento> eventi=new ArrayList<>();
 
 
     @OneToMany(mappedBy = "wishlist",cascade = CascadeType.ALL)

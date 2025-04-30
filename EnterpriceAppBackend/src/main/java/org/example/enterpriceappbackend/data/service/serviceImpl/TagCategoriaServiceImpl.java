@@ -2,13 +2,9 @@ package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.example.enterpriceappbackend.data.entity.Evento;
 import org.example.enterpriceappbackend.data.entity.TagCategoria;
-import org.example.enterpriceappbackend.data.entity.Utente;
-import org.example.enterpriceappbackend.data.repository.EventoRepository;
 import org.example.enterpriceappbackend.data.repository.TagCategoriaRepository;
 import org.example.enterpriceappbackend.data.service.TagCategoriaService;
-import org.example.enterpriceappbackend.dto.EventoDTO;
 import org.example.enterpriceappbackend.dto.TagCategoriaDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
