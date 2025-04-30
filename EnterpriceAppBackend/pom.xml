@@ -23,8 +23,9 @@
     <dependencies>
         <!-- Spring Boot Web Starter -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>6.1.6</version>
         </dependency>
 
         <!-- Spring Boot Data JPA Starter (per connessione a database) -->

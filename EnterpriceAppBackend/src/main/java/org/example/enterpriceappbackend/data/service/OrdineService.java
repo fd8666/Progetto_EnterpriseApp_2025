@@ -13,7 +13,7 @@ public interface OrdineService {
 
     Long save(OrdineDTO ordineDTO);
 
-    OrdineDTO updateOrdineProdotti(Long id, OrdineDTO ordineDTO);
+    void updateOrdineProdotti(Long id, List<OrdineDTO> ordineDTO);
 
     void delete(Long id);
 

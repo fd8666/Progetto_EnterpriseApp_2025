@@ -5,18 +5,18 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-//@Data
-//@RequiredArgsConstructor
-//public class UtenteRegistrazioneDTO {
+@Data
+@RequiredArgsConstructor
+public class UtenteRegistrazioneDTO {
 //
-//    @NotNull
-//    private String nome;
+    @NotNull
+    private String nome;
 //
-//    @NotNull
-//    private String cognome;
+    @NotNull
+    private String cognome;
 //
-//    @Email
-//    private String credenzialiEmail;
+    @Email
+    private String credenzialiEmail;
 //
-//    private String credenzialiPassword;
-//}
+    private String credenzialiPassword;
+}
