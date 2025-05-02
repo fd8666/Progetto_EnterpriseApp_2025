@@ -3,9 +3,12 @@ package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.enterpriceappbackend.data.repository.BigliettoRepository;
 import org.example.enterpriceappbackend.data.repository.PagamentoRepository;
 import org.example.enterpriceappbackend.data.service.PagamentoService;
 import org.example.enterpriceappbackend.dto.PagamentoDTO;
+import org.example.enterpriceappbackend.dto.PagamentoRequestDTO;
+import org.example.enterpriceappbackend.dto.PagamentoResponseDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +19,7 @@ import java.util.List;
 public class PagamentoServiceImpl implements PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
+    private final BigliettoRepository bigliettoRepository;
 
     @Override
     public List<PagamentoDTO> findAll() {
@@ -42,4 +46,16 @@ public class PagamentoServiceImpl implements PagamentoService {
         return pagamentoDTO;
     }
 
+    @Override
+    public void deleteById(Long id){
+        if(!pagamentoRepository.existsById(id)){
+            throw new RuntimeException("PAGAMENTO NON TROVATO CON L'ID: " + id);
+        }
+        pagamentoRepository.deleteById(id);
+    }
+
+    @Override
+    public PagamentoResponseDTO processpayment(PagamentoRequestDTO richiesta){
+        return null;
+    }
 }

@@ -10,7 +10,9 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class OrdineDTO {
+
     private Long id;
     private List<PagamentoDTO> pagamenti;
     private LocalDateTime dataCreazione;

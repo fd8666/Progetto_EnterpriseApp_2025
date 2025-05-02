@@ -35,17 +35,21 @@ public class OrdineServiceImpl implements OrdineService {
     }
 
     @Override
-    public Long save(OrdineDTO ordineDTO){
-        Ordine ordine = new Ordine();
-        return ordine.getId();
+    public OrdineDTO save(OrdineDTO ordineDTO){
+        return null;
     }
 
     @Override
-    public OrdineDTO updateOrdineProdotti(Long id, OrdineDTO ordineDTO) {
+    public OrdineDTO update(Long id, OrdineDTO ordineDTO) {
         return null;
     }
 
     @Override
     public void delete(Long id){}
+
+    @Override
+    public OrdineDTO createOrdineWithPagamento(OrdineDTO ordinedto, Long enevetoId, Long tipoPostoId, int quantita){
+        return null;
+    }
 
 }

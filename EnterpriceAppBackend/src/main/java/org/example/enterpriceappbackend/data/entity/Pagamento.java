@@ -15,6 +15,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class Pagamento {
 
     @Id
@@ -53,5 +54,4 @@ public class Pagamento {
 
     @OneToMany(mappedBy = "pagamento", cascade = CascadeType.ALL)
     private List<Biglietto> biglietti;
-
 }

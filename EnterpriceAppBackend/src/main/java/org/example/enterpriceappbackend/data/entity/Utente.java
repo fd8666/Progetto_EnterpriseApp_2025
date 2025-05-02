@@ -1,13 +1,11 @@
 package org.example.enterpriceappbackend.data.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.enterpriceappbackend.data.constants.Role;
-
 import java.util.List;
 
 @Data
@@ -16,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "Utente")
+
 public class Utente{
 
     @Id
@@ -42,7 +41,6 @@ public class Utente{
     private Role role;
 
     @OneToMany(mappedBy = "organizzatore",cascade = CascadeType.ALL)
-    @JsonIgnore
     private List<Evento> eventi;
 
     @OneToOne(mappedBy = "utente",cascade = CascadeType.ALL)

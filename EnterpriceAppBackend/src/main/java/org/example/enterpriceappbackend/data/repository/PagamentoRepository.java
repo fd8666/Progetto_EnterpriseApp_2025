@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
+
     @Query("SELECT p FROM Pagamento p WHERE p.ordine.proprietario.id = :proprietarioId")
     List<Pagamento> findByProprietarioId(@Param("proprietarioId") Long id);
-
 }
