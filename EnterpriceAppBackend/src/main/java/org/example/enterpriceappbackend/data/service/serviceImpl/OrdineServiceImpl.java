@@ -23,6 +23,8 @@ public class OrdineServiceImpl implements OrdineService {
     private final PagamentoRepository pagamentoRepository;
     private final BigliettoRepository bigliettoRepository;
 
+    // da completare
+
     @Override
     @Transactional
     public Ordine findById(long id) {
@@ -35,13 +37,17 @@ public class OrdineServiceImpl implements OrdineService {
     }
 
     @Override
-    public OrdineDTO save(OrdineDTO ordineDTO){
+    public Long save(OrdineDTO ordineDTO){
         return null;
     }
 
     @Override
     public OrdineDTO update(Long id, OrdineDTO ordineDTO) {
         return null;
+    }
+
+    @Override
+    public void updateOrdineProdotti(Long id, List<OrdineDTO> ordineDTO) {
     }
 
     @Override

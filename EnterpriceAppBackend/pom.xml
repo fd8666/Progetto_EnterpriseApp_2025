@@ -22,16 +22,23 @@
 
     <dependencies>
         <!-- Spring Boot Web Starter -->
+        <!-- Starter per applicazioni web RESTful (incluso Spring MVC e Jackson) -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>6.1.6</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Boot Data JPA Starter (per connessione a database) -->
+        <!-- Starter per Spring Data JPA (connessione a database relazionali) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Jackson (opzionale: solo se vuoi forzare l'ultima versione disponibile) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.0</version> <!-- puoi anche rimuovere la versione per usare quella gestita da Spring Boot -->
         </dependency>
 
         <!-- Spring Boot PostgreSQL Starter -->

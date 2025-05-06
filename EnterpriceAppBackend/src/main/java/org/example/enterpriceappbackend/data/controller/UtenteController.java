@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 
 
 @RequiredArgsConstructor
-@RequestMapping(path="/utente-api")
+@RequestMapping(path="/api/utente")
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class UtenteController {

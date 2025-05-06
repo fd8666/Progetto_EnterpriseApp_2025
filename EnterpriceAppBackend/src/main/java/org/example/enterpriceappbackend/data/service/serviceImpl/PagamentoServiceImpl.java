@@ -18,6 +18,7 @@ import java.util.List;
 @Transactional
 public class PagamentoServiceImpl implements PagamentoService {
 
+    // implementare
     private final PagamentoRepository pagamentoRepository;
     private final BigliettoRepository bigliettoRepository;
 

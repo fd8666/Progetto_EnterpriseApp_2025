@@ -11,9 +11,11 @@ public interface OrdineService {
 
     List<OrdineDTO> findByProprietario(Long proprietarioId);
 
-    OrdineDTO save(OrdineDTO ordineDTO);
+    Long save(OrdineDTO ordineDTO);
 
     OrdineDTO update(Long id, OrdineDTO ordineDTO);
+
+    void updateOrdineProdotti(Long ordineId,List<OrdineDTO> ordineDTO);
 
     void delete(Long id);
 

@@ -1,7 +1,6 @@
 package org.example.enterpriceappbackend.data.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.enterpriceappbackend.data.entity.Pagamento;
 import org.example.enterpriceappbackend.data.service.PagamentoService;
 import org.example.enterpriceappbackend.dto.PagamentoDTO;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,7 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoService.findById(id));
     }
 
-    @GetMapping("/utente/{utenteId")
+    @GetMapping("/utente/{utenteId}")
     public ResponseEntity<List<PagamentoDTO>> getPagamentoByUtente(@PathVariable Long utenteId) {
         return ResponseEntity.ok(pagamentoService.findByUtenteId(utenteId));
     }
