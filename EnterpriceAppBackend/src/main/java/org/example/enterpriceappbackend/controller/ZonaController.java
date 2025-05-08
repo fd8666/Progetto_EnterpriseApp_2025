@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*",allowedHeaders = "*")
-@RequestMapping("/zone")
+@RequestMapping("/api/zone")
 @RequiredArgsConstructor
 @Api(value = "Zone API", description = "Operazioni relative alla visualizzazione delle zone", tags = {"Zone"})
 public class ZonaController {

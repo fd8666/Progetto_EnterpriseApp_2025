@@ -28,7 +28,7 @@ public class EventoDTO {
     private String luogo;
     private Long organizzatoreId;
     private List<Biglietto> biglietti;
-    private List<Struttura> strutture;
+    private Struttura struttura;
     private List<TipoPosto> tipiPosto;
 
 }

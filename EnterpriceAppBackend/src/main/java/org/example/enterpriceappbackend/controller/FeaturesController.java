@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/features")
+@RequestMapping("/api/features")
 @RequiredArgsConstructor
 @Api(value = "Features API", description = "Operazioni relative alla visualizzazione e creazione delle features", tags = {"Features"})
 public class FeaturesController {

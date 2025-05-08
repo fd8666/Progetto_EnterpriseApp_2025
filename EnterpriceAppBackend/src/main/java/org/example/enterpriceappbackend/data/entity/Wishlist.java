@@ -37,7 +37,7 @@ public class Wishlist {
             joinColumns = @JoinColumn(name = "wishlist_id"),
             inverseJoinColumns = @JoinColumn(name = "evento_id")
     )
-    private List<Evento> eventi=new ArrayList<>();
+    private List<Evento> eventi;
 
 
     @OneToMany(mappedBy = "wishlist",cascade = CascadeType.ALL)

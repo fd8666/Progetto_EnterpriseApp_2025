@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*",allowedHeaders = "*")
-@RequestMapping("/strutture")
+@RequestMapping("/api/strutture")
 @RequiredArgsConstructor
 @Api(value = "Struttura API", description = "Operazioni relative alla gestione delle strutture", tags = {"Struttura"})
 public class StrutturaController {

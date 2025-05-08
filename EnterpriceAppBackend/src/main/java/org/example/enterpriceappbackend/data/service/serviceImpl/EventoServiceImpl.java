@@ -1,7 +1,7 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.enterpriceappbackend.data.entity.Evento;
 import org.example.enterpriceappbackend.data.entity.TagCategoria;
 import org.example.enterpriceappbackend.data.entity.Utente;
@@ -10,15 +10,16 @@ import org.example.enterpriceappbackend.data.repository.TagCategoriaRepository;
 import org.example.enterpriceappbackend.data.repository.UtenteRepository;
 import org.example.enterpriceappbackend.data.service.EventoService;
 import org.example.enterpriceappbackend.dto.EventoDTO;
+import org.example.enterpriceappbackend.exceptions.BadRequest;
+import org.example.enterpriceappbackend.exceptions.NotFound;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,12 +29,19 @@ public class EventoServiceImpl implements EventoService {
     private final UtenteRepository utenteRepository;
     private final TagCategoriaRepository tagCategoriaRepository;
 
+    private void validateId(Long id) {
+        if (id == null || id <= 0) {
+            throw new BadRequest("ID non valido");
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public EventoDTO findById(Long id) {
+        validateId(id);
         return eventoRepository.findById(id)
                 .map(this::toDto)
-                .orElseThrow(() -> new EntityNotFoundException("Evento non trovato con id: " + id));
+                .orElseThrow(() -> new NotFound("Evento non trovato con id: " + id));
     }
 
     @Override
@@ -47,8 +55,9 @@ public class EventoServiceImpl implements EventoService {
     @Override
     @Transactional(readOnly = true)
     public List<EventoDTO> findByOrganizzatore(Long organizzatoreId) {
+        validateId(organizzatoreId);
         Utente organizzatore = utenteRepository.findById(organizzatoreId)
-                .orElseThrow(() -> new EntityNotFoundException("Organizzatore non trovato con id: " + organizzatoreId));
+                .orElseThrow(() -> new NotFound("Organizzatore non trovato con id: " + organizzatoreId));
         return eventoRepository.findByOrganizzatore(organizzatore).stream()
                 .map(this::toDto)
                 .collect(toList());
@@ -57,8 +66,9 @@ public class EventoServiceImpl implements EventoService {
     @Override
     @Transactional(readOnly = true)
     public List<EventoDTO> findByCategoria(Long categoriaId) {
+        validateId(categoriaId);
         TagCategoria categoria = tagCategoriaRepository.findById(categoriaId)
-                .orElseThrow(() -> new EntityNotFoundException("Categoria non trovata con id: " + categoriaId));
+                .orElseThrow(() -> new NotFound("Categoria non trovata con id: " + categoriaId));
         return eventoRepository.findByCategoria(categoria).stream()
                 .map(this::toDto)
                 .collect(toList());
@@ -83,68 +93,63 @@ public class EventoServiceImpl implements EventoService {
     @Override
     public EventoDTO create(EventoDTO eventoDTO) {
         TagCategoria categoria = tagCategoriaRepository.findById(eventoDTO.getCategoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoria non trovata"));
+                .orElseThrow(() -> new NotFound("Categoria non trovata con id: " + eventoDTO.getCategoriaId()));
         Evento evento = toEntity(eventoDTO);
         evento.setCategoria(categoria);
-        // Salva l'evento
         evento = eventoRepository.save(evento);
-        // Converte l'entità Evento in DTO e lo restituisce
+        log.info("Evento creato con ID {}", evento.getId());
         return toDto(evento);
     }
-
 
     @Override
     public EventoDTO save(EventoDTO eventoDTO) {
         Evento evento = toEntity(eventoDTO);
         evento = eventoRepository.save(evento);
+        log.info("Evento salvato con ID {}", evento.getId());
         return toDto(evento);
     }
 
     @Override
     public EventoDTO update(Long id, EventoDTO eventoDTO) {
+        validateId(id);
         if (!eventoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Evento non trovato con id: " + id);
+            throw new NotFound("Evento non trovato con id: " + id);
         }
         Evento evento = toEntity(eventoDTO);
         evento.setId(id);
         TagCategoria categoria = tagCategoriaRepository.findById(eventoDTO.getCategoriaId())
-                .orElseThrow(() -> new EntityNotFoundException("Categoria non trovata con id: " + eventoDTO.getCategoriaId()));
-
+                .orElseThrow(() -> new NotFound("Categoria non trovata con id: " + eventoDTO.getCategoriaId()));
         evento.setCategoria(categoria);
         evento = eventoRepository.save(evento);
+        log.info("Evento aggiornato con ID {}", evento.getId());
         return toDto(evento);
     }
 
     @Override
     public void delete(Long id) {
+        validateId(id);
         if (!eventoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Evento non trovato con id: " + id);
+            throw new NotFound("Evento non trovato con id: " + id);
         }
         eventoRepository.deleteById(id);
-    }
-
-    @Override
-    public List<EventoDTO> findByLuogoContainingIgnoreCase(String luogo) {
-        List<Evento> eventi = eventoRepository.findByLuogoContainingIgnoreCase(luogo);
-        return eventi.stream().map(this::toDto).collect(toList());
+        log.info("Evento eliminato con ID {}", id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventoDTO> findByDataOraAperturaCancelliBetween(
-            LocalDateTime dataInizio, LocalDateTime dataFine
-    ) {
-        List<Evento> eventi = eventoRepository.findByDataOraAperturaCancelliBetween(
-                dataInizio, dataFine
-        );
-        return eventi.stream()
+    public List<EventoDTO> findByLuogoContainingIgnoreCase(String luogo) {
+        return eventoRepository.findByLuogoContainingIgnoreCase(luogo).stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
-
-
-    // -------------------- MAPPER INTERNO --------------------
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventoDTO> findByDataOraAperturaCancelliBetween(LocalDateTime dataInizio, LocalDateTime dataFine) {
+        return eventoRepository.findByDataOraAperturaCancelliBetween(dataInizio, dataFine).stream()
+                .map(this::toDto)
+                .collect(toList());
+    }
 
     private EventoDTO toDto(Evento evento) {
         EventoDTO dto = new EventoDTO();
@@ -159,7 +164,7 @@ public class EventoServiceImpl implements EventoService {
         dto.setBiglietti(evento.getBiglietti());
         dto.setCategoriaId(evento.getCategoria() != null ? evento.getCategoria().getId() : null);
         dto.setOrganizzatoreId(evento.getOrganizzatore() != null ? evento.getOrganizzatore().getId() : null);
-       // dto.setStrutture(evento.getStrutture()); per mirko andra modificato secondo la 1:n non piu gestita da m:m
+        dto.setStruttura(evento.getStruttura());
         dto.setTipiPosto(evento.getTipiPosto());
         return dto;
     }
@@ -174,12 +179,12 @@ public class EventoServiceImpl implements EventoService {
         evento.setPostiDisponibili(dto.getPostiDisponibili());
         evento.setLuogo(dto.getLuogo());
         evento.setBiglietti(dto.getBiglietti());
-      //  evento.setStrutture(dto.getStrutture());  per mirko andra modificato secondo la 1:n
+        evento.setStruttura(dto.getStruttura());
         evento.setTipiPosto(dto.getTipiPosto());
 
         if (dto.getOrganizzatoreId() != null) {
-            Utente organizzatore = new Utente();
-            organizzatore.setId(dto.getOrganizzatoreId());
+            Utente organizzatore = utenteRepository.findById(dto.getOrganizzatoreId())
+                    .orElseThrow(() -> new NotFound("Organizzatore non trovato con id: " + dto.getOrganizzatoreId()));
             evento.setOrganizzatore(organizzatore);
         }
 

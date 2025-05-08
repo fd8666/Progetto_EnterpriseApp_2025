@@ -2,6 +2,7 @@ package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.enterpriceappbackend.data.constants.Visibilita;
 import org.example.enterpriceappbackend.data.entity.Evento;
 import org.example.enterpriceappbackend.data.entity.Utente;
@@ -11,6 +12,8 @@ import org.example.enterpriceappbackend.data.repository.UtenteRepository;
 import org.example.enterpriceappbackend.data.repository.WishlistRepository;
 import org.example.enterpriceappbackend.data.service.WishlistService;
 import org.example.enterpriceappbackend.dto.WishlistDTO;
+import org.example.enterpriceappbackend.exceptions.BadRequest;
+import org.example.enterpriceappbackend.exceptions.NotFound;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,122 +22,118 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class WishlistServiceImpl implements WishlistService {
 
-
     private final WishlistRepository wishlistRepository;
     private final UtenteRepository utenteRepository;
     private final EventoRepository eventoRepository;
 
+    private void validateId(Long id) {
+        if (id == null || id <= 0) {
+            throw new BadRequest("ID non valido");
+        }
+    }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<WishlistDTO> findById(Long id) {
-        return wishlistRepository.findById(id)
-                .map(this::toDto);
+        validateId(id);
+        return wishlistRepository.findById(id).map(this::toDto);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<WishlistDTO> findByAll() {
-        return wishlistRepository.findAll().stream().map(this::toDto).collect(toList());
+        return wishlistRepository.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<WishlistDTO> findByUtente(Long utenteId) {
-        return wishlistRepository.findByUtenteId(utenteId)
-                .stream().map(this::toDto)
-                .collect(Collectors.toList());
+        validateId(utenteId);
+        return wishlistRepository.findByUtenteId(utenteId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<WishlistDTO> findByUtenteAndVisibilita(Long utenteId, Visibilita visibilita) {
+        validateId(utenteId);
         return wishlistRepository.findByUtenteIdAndVisibilita(utenteId, visibilita)
-                .stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+                .stream().map(this::toDto).collect(Collectors.toList());
     }
 
-
     @Override
-    @Transactional
-    public WishlistDTO create(WishlistDTO wishlistDTO) {
-        // Verifica se l'utente ha già una wishlist attiva
-        List<Wishlist> existing = wishlistRepository.findByUtenteId(wishlistDTO.getUtenteId());
-        if (!existing.isEmpty()) {
-            throw new RuntimeException("L'utente ha già una wishlist.");
+    public WishlistDTO create(WishlistDTO dto) {
+        validateId(dto.getUtenteId());
+
+        if (!wishlistRepository.findByUtenteId(dto.getUtenteId()).isEmpty()) {
+            throw new BadRequest("L'utente ha già una wishlist.");
         }
-        Wishlist wishlist = toEntity(wishlistDTO);
-        wishlist.setDataCreazione(LocalDateTime.now());
-        Wishlist saved = wishlistRepository.save(wishlist);
+
+        Wishlist entity = toEntity(dto);
+        entity.setDataCreazione(LocalDateTime.now());
+        Wishlist saved = wishlistRepository.save(entity);
+        log.info("Wishlist creata con ID {}", saved.getId());
         return toDto(saved);
     }
 
-
-
-
     @Override
-    @Transactional
-    public WishlistDTO save(WishlistDTO wishlistDTO) {
-        Wishlist wishlist = toEntity(wishlistDTO);
-        Wishlist saved = wishlistRepository.save(wishlist);
+    public WishlistDTO save(WishlistDTO dto) {
+        Wishlist saved = wishlistRepository.save(toEntity(dto));
+        log.info("Wishlist salvata con ID {}", saved.getId());
         return toDto(saved);
     }
 
-
     @Override
-    @Transactional
-    public WishlistDTO update(Long id, WishlistDTO wishlistDTO) {
-        // Trova la wishlist esistente
-        Wishlist wishlist = wishlistRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Wishlist non trovata con id: " + id));
+    public WishlistDTO update(Long id, WishlistDTO dto) {
+        validateId(id);
 
-        // Aggiorna le proprietà della wishlist
-        wishlist.setVisibilita(wishlistDTO.getVisibilita());
-        wishlist.setDataCreazione(wishlistDTO.getDataCreazione());
-        List<Evento> eventi = eventoRepository.findAllById(wishlistDTO.getEventi());
-        wishlist.setEventi(eventi);
-        wishlist = wishlistRepository.save(wishlist);
-        return toDto(wishlist);
+        Wishlist existing = wishlistRepository.findById(id)
+                .orElseThrow(() -> new NotFound("Wishlist non trovata con id: " + id));
+
+        existing.setVisibilita(dto.getVisibilita());
+        existing.setDataCreazione(dto.getDataCreazione());
+        existing.setEventi(eventoRepository.findAllById(dto.getEventi()));
+
+        Wishlist updated = wishlistRepository.save(existing);
+        log.info("Wishlist aggiornata con ID {}", updated.getId());
+        return toDto(updated);
     }
 
-
-
-
     @Override
-    @Transactional
     public void deleteById(Long id) {
-        // Trova la wishlist esistente
+        validateId(id);
+
         Wishlist wishlist = wishlistRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Wishlist non trovata con id: " + id));
+                .orElseThrow(() -> new NotFound("Wishlist non trovata con id: " + id));
+
         Utente utente = wishlist.getUtente();
         utente.setWishlist(null);
         utenteRepository.save(utente);
+
         wishlist.getEventi().clear();
         wishlistRepository.delete(wishlist);
+        log.info("Wishlist eliminata con ID {}", id);
     }
 
     private Wishlist toEntity(WishlistDTO dto) {
         Wishlist wishlist = new Wishlist();
         wishlist.setId(dto.getId());
 
-
         Utente utente = utenteRepository.findById(dto.getUtenteId())
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                .orElseThrow(() -> new NotFound("Utente non trovato con id: " + dto.getUtenteId()));
         wishlist.setUtente(utente);
 
         wishlist.setVisibilita(dto.getVisibilita());
         wishlist.setDataCreazione(dto.getDataCreazione());
-        List<Evento> eventi = eventoRepository.findAllById(dto.getEventi());
-        wishlist.setEventi(eventi);
+        wishlist.setEventi(eventoRepository.findAllById(dto.getEventi()));
+
         return wishlist;
     }
-
-
 
     private WishlistDTO toDto(Wishlist wishlist) {
         WishlistDTO dto = new WishlistDTO();
@@ -142,13 +141,7 @@ public class WishlistServiceImpl implements WishlistService {
         dto.setUtenteId(wishlist.getUtente().getId());
         dto.setVisibilita(wishlist.getVisibilita());
         dto.setDataCreazione(wishlist.getDataCreazione());
-        List<Long> eventiIds = wishlist.getEventi().stream()
-                .map(Evento::getId)
-                .collect(Collectors.toList());
-        dto.setEventi(eventiIds);
-
+        dto.setEventi(wishlist.getEventi().stream().map(Evento::getId).collect(Collectors.toList()));
         return dto;
     }
-
-
 }
