@@ -2,7 +2,6 @@ package org.example.enterpriceappbackend.data.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -54,13 +53,9 @@ public class Evento {
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
     private List<Biglietto> biglietti;
 
-    @ManyToMany //relazione N:N con struttura join
-    @JoinTable(
-            name = "ev_st",
-            joinColumns = @JoinColumn(name = "evento_id"),
-            inverseJoinColumns = @JoinColumn(name = "struttura_id")
-    )
-    private List<Struttura> strutture;
+    @ManyToOne
+    @JoinColumn(name = "struttura_id", referencedColumnName = "id", nullable = false)
+    private Struttura struttura;
 
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
     private List<TipoPosto> tipiPosto;

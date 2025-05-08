@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/EnterpriceAppBackend/EnterpriceAppBackend.iml" filepath="$PROJECT_DIR$/EnterpriceAppBackend/EnterpriceAppBackend.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/Progetto_EnterpriseApp_2025.iml" filepath="$PROJECT_DIR$/.idea/Progetto_EnterpriseApp_2025.iml" />
     </modules>
   </component>

@@ -1,4 +1,4 @@
-package org.example.enterpriceappbackend.data.controller;
+package org.example.enterpriceappbackend.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.data.service.OrdineService;

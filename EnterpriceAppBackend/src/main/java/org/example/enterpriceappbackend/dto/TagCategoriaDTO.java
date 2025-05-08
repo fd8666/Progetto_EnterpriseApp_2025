@@ -17,5 +17,4 @@ public class TagCategoriaDTO {
     private String descrizione;
     private List<Evento> eventi;
 
-
 }

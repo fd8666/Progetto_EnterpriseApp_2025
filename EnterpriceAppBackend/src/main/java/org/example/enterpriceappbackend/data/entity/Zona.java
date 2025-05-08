@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -29,9 +30,7 @@ public class Zona {
 
     @ManyToOne(optional = false)
     @JoinColumn(name="struttura_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private Struttura struttura;
-
-    @OneToMany (mappedBy = "zona",cascade = CascadeType.ALL)
-    private List<Features> features;
 
 }

@@ -159,7 +159,7 @@ public class EventoServiceImpl implements EventoService {
         dto.setBiglietti(evento.getBiglietti());
         dto.setCategoriaId(evento.getCategoria() != null ? evento.getCategoria().getId() : null);
         dto.setOrganizzatoreId(evento.getOrganizzatore() != null ? evento.getOrganizzatore().getId() : null);
-        dto.setStrutture(evento.getStrutture());
+       // dto.setStrutture(evento.getStrutture()); per mirko andra modificato secondo la 1:n non piu gestita da m:m
         dto.setTipiPosto(evento.getTipiPosto());
         return dto;
     }
@@ -174,7 +174,7 @@ public class EventoServiceImpl implements EventoService {
         evento.setPostiDisponibili(dto.getPostiDisponibili());
         evento.setLuogo(dto.getLuogo());
         evento.setBiglietti(dto.getBiglietti());
-        evento.setStrutture(dto.getStrutture());
+      //  evento.setStrutture(dto.getStrutture());  per mirko andra modificato secondo la 1:n
         evento.setTipiPosto(dto.getTipiPosto());
 
         if (dto.getOrganizzatoreId() != null) {

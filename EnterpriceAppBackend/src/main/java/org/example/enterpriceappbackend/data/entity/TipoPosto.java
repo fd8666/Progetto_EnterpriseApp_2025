@@ -30,7 +30,7 @@ public class TipoPosto {
     @JoinColumn(name = "evento_id",nullable = false)
     private Evento evento;
 
-    @OneToMany(mappedBy = "tipoPosto",cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Features> Features;
+    @OneToOne(mappedBy = "tipoPosto",cascade = CascadeType.ALL, orphanRemoval = true)
+    private Features Features;
 
 }

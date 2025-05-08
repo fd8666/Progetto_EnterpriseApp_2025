@@ -17,6 +17,8 @@ public interface OrdineService {
 
     void updateOrdineProdotti(Long ordineId,List<OrdineDTO> ordineDTO);
 
+    OrdineDTO updateOrdineProdotti(Long id, OrdineDTO ordineDTO);
+
     void delete(Long id);
 
     OrdineDTO createOrdineWithPagamento(OrdineDTO ordinedto, Long eventoId, Long tipoPostoId, int quantita);

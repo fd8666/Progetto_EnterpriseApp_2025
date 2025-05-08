@@ -11,11 +11,7 @@ public class StrutturaInfoOrganizzatoreDTO { //per la visione descrittiva della 
     private String nome;
     private String categoria;
     private String descrizione;
-    private String indirizzo;
     private String immagine;
-    private String coordinateLatitude;
-    private String coordinateLongitude;
-
-    private List<ZonaInfoDTO> zone;
+    private String indirizzo;
 
 }

@@ -51,6 +51,11 @@ public class OrdineServiceImpl implements OrdineService {
     }
 
     @Override
+    public OrdineDTO updateOrdineProdotti(Long id, OrdineDTO ordineDTO) {
+        return null;
+    }
+
+    @Override
     public void delete(Long id){}
 
     @Override

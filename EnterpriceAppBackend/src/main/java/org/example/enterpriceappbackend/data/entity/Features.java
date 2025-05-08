@@ -16,16 +16,13 @@ public class Features {
     private Long id;
 
     @Column(name = "Zona")
-    private String zone;
+    private String zona;
 
     @Column(name = "Features")
-    private String features;
+    private String features;;
 
-    @ManyToOne
-    @JoinColumn(name = "zona_id")
-    private Zona zona;
-
-    @ManyToOne
-    @JoinColumn(name = "tipo_posto_id")
+    @OneToOne
+    @JoinColumn(name = "tipo_posto_id", nullable = false)
     private TipoPosto tipoPosto;
+
 }
