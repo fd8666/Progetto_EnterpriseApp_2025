@@ -24,6 +24,5 @@ public class PagamentoDTO {
     private LocalDate dataPagamento;
     private StatoPagamento stato;
     private Long ordineId;
-    private List<BigliettoInfoDTO> bigliettiInfo;
     private List<Biglietto> biglietti;
 }

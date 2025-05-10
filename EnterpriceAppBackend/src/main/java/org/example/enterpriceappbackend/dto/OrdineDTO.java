@@ -3,6 +3,7 @@ package org.example.enterpriceappbackend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.enterpriceappbackend.data.entity.Pagamento;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
 public class OrdineDTO {
 
     private Long id;
-    private List<PagamentoDTO> pagamenti;
+    private List<Pagamento> pagamenti;
     private LocalDateTime dataCreazione;
     private String emailProprietario;
     private Double prezzoTotale;

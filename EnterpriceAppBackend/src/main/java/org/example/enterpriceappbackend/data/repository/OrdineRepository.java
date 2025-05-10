@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface OrdineRepository extends JpaRepository<Ordine, Long> {
-    List<Ordine> findByProprietario(Utente proprietario);
+    List<Ordine> findByProprietarioId(Long proprietarioId);
 }
