@@ -21,4 +21,5 @@ public interface EventoService {
     //metodo che trova evento tramite luogo ignorando minuscole/maiuscole
     List<EventoDTO> findByLuogoContainingIgnoreCase(String luogo);
     List<EventoDTO> findByDataOraAperturaCancelliBetween(LocalDateTime dataInizio, LocalDateTime dataFine);
+    void checkEventiScaduti();
 }

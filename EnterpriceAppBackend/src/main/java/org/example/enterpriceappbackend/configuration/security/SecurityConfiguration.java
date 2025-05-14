@@ -51,6 +51,7 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+
                                 "/api/utente/login",
                                 "/api/utente/register",
                                 "/api/utente/passwordDimenticata",
@@ -60,7 +61,8 @@ public class SecurityConfiguration {
                                 "/api/utente/{id}",
                                 "/api/ordine/aggiungi",
                                 "/api/ordine/aggiorna/",
-                                "api/ordine/elimina/"
+                                "api/ordine/elimina/",
+                                "api/wishlist/condiviseCon/"
                         ).permitAll()
 
                 )

@@ -2,9 +2,13 @@ package org.example.enterpriceappbackend.data.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,6 +16,8 @@ import java.util.List;
 @Table(name = "Evento")
 @Data
 @NoArgsConstructor
+@SQLDelete(sql = "UPDATE EVENTO SET deleted = 1 WHERE id=?")
+@SQLRestriction("deleted = 0")
 public class Evento {
 
     @Id
@@ -40,6 +46,9 @@ public class Evento {
     @Column(name = "luogo", nullable = false)
     private String luogo;
 
+    @Column(name = "deleted", nullable = false)
+    private Integer deleted;
+
     @ManyToOne //crea una tabella con la relazione ManyToOne con Utente(Organizzatore)
     @JoinColumn(name = "organizzatore_id", referencedColumnName = "id", nullable = false)
     @JsonIgnore
@@ -51,7 +60,7 @@ public class Evento {
     private TagCategoria categoria;
 
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
-    @JsonIgnore
+    @JsonManagedReference
     private List<Biglietto> biglietti;
 
     @ManyToOne
@@ -62,4 +71,6 @@ public class Evento {
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
     @JsonIgnore
     private List<TipoPosto> tipiPosto;
+
+
 }

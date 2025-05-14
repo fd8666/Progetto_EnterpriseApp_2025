@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.example.enterpriceappbackend.data.entity.Utente;
 import org.example.enterpriceappbackend.data.entity.Wishlist;
 import org.example.enterpriceappbackend.data.repository.EventoRepository;
 import org.example.enterpriceappbackend.data.repository.UtenteRepository;
+import org.example.enterpriceappbackend.data.repository.WishlistCondivisaRepository;
 import org.example.enterpriceappbackend.data.repository.WishlistRepository;
 import org.example.enterpriceappbackend.data.service.WishlistService;
 import org.example.enterpriceappbackend.dto.WishlistDTO;
@@ -31,6 +33,7 @@ public class WishlistServiceImpl implements WishlistService {
     private final WishlistRepository wishlistRepository;
     private final UtenteRepository utenteRepository;
     private final EventoRepository eventoRepository;
+    private final WishlistCondivisaRepository wishlistCondivisaRepository;
 
     private void validateId(Long id) {
         if (id == null || id <= 0) {
@@ -57,7 +60,44 @@ public class WishlistServiceImpl implements WishlistService {
         validateId(utenteId);
         return wishlistRepository.findByUtenteId(utenteId).stream().map(this::toDto).collect(Collectors.toList());
     }
+    @Transactional
+    @Override
+    public void removeEventoFromWishlist(Long wishlistId, Long eventoId) {
+        Wishlist wishlist = wishlistRepository.findById(wishlistId)
+                .orElseThrow(() -> new EntityNotFoundException("Wishlist non trovata"));
 
+        Evento eventoToRemove = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new EntityNotFoundException("Evento non trovato"));
+
+        wishlist.getEventi().remove(eventoToRemove);
+
+        wishlistRepository.save(wishlist);
+    }
+
+
+    @Transactional
+    @Override
+    public List<WishlistDTO> findCondiviseConUtente(Long utenteId) {
+        validateId(utenteId);
+        List<Wishlist> condivise = wishlistRepository.findByCondivisaCon(utenteId);
+        return condivise.stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+
+    @Override
+    @Transactional
+    public void addEventoToWishlist(Long wishlistId, Long eventoId) {
+        Wishlist wishlist = wishlistRepository.findById(wishlistId)
+                .orElseThrow(() -> new EntityNotFoundException("Wishlist non trovata con id: " + wishlistId));
+
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new EntityNotFoundException("Evento non trovato con id: " + eventoId));
+
+        wishlist.getEventi().add(evento);
+        wishlistRepository.save(wishlist);
+    }
     @Override
     @Transactional(readOnly = true)
     public List<WishlistDTO> findByUtenteAndVisibilita(Long utenteId, Visibilita visibilita) {

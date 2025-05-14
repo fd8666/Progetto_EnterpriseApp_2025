@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,7 @@ public class TipoPosto {
 
     @ManyToOne
     @JoinColumn(name = "evento_id",nullable = false)
+    @JsonBackReference
     private Evento evento;
 
     @OneToOne(mappedBy = "tipoPosto",cascade = CascadeType.ALL, orphanRemoval = true)

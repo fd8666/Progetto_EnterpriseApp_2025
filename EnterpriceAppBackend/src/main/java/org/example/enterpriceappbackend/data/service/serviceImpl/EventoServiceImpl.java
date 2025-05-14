@@ -146,9 +146,62 @@ public class EventoServiceImpl implements EventoService {
     @Override
     @Transactional(readOnly = true)
     public List<EventoDTO> findByDataOraAperturaCancelliBetween(LocalDateTime dataInizio, LocalDateTime dataFine) {
-        return eventoRepository.findByDataOraAperturaCancelliBetween(dataInizio, dataFine).stream()
+        log.debug("Filtering events between: {} and {}", dataInizio, dataFine);
+
+        // Se entrambe le date sono null, restituisci tutti gli eventi
+        if (dataInizio == null && dataFine == null) {
+            log.debug("No date range provided, returning all events");
+            return findAll();
+        }
+
+        // Se solo dataInizio è null, imposta a minima data possibile
+        if (dataInizio == null) {
+            dataInizio = LocalDateTime.MIN;
+            log.debug("Start date not provided, using MIN date");
+        }
+
+        // Se solo dataFine è null, imposta a massima data possibile
+        if (dataFine == null) {
+            dataFine = LocalDateTime.MAX;
+            log.debug("End date not provided, using MAX date");
+        }
+
+        // Verifica che dataInizio sia prima di dataFine
+        if (dataInizio.isAfter(dataFine)) {
+            log.warn("Invalid date range: start {} is after end {}", dataInizio, dataFine);
+            throw new IllegalArgumentException("La data di inizio deve essere precedente alla data di fine");
+        }
+
+        List<Evento> eventi = eventoRepository.findByDataOraAperturaCancelliBetween(dataInizio, dataFine);
+        log.debug("Found {} events in date range", eventi.size());
+
+        return eventi.stream()
                 .map(this::toDto)
                 .collect(toList());
+    }
+
+    @Override
+    @Transactional
+    public void checkEventiScaduti() {
+        log.info("Controllo eventi scaduti in esecuzione: {}", LocalDateTime.now());
+
+        LocalDateTime oggi = LocalDateTime.now();
+
+        // Trova eventi la cui data è passata e che non sono già contrassegnati come deleted
+        List<Evento> eventiScaduti = eventoRepository.findByDataOraEventoBeforeAndDeletedEquals(oggi, 0);
+
+        if (!eventiScaduti.isEmpty()) {
+            log.info("Trovati {} eventi scaduti da eliminare", eventiScaduti.size());
+
+            // Contrassegna come eliminati (soft delete)
+            for (Evento evento : eventiScaduti) {
+                evento.setDeleted(1);
+                eventoRepository.save(evento);
+                log.info("Evento ID: {} '{}' contrassegnato come scaduto", evento.getId(), evento.getNome());
+            }
+        } else {
+            log.info("Nessun evento scaduto trovato");
+        }
     }
 
     private EventoDTO toDto(Evento evento) {
@@ -181,6 +234,8 @@ public class EventoServiceImpl implements EventoService {
         evento.setBiglietti(dto.getBiglietti());
         evento.setStruttura(dto.getStruttura());
         evento.setTipiPosto(dto.getTipiPosto());
+        evento.setDeleted(0);
+
 
         if (dto.getOrganizzatoreId() != null) {
             Utente organizzatore = utenteRepository.findById(dto.getOrganizzatoreId())

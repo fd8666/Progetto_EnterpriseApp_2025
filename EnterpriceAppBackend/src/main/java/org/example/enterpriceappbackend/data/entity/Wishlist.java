@@ -38,6 +38,7 @@ public class Wishlist {
             joinColumns = @JoinColumn(name = "wishlist_id"),
             inverseJoinColumns = @JoinColumn(name = "evento_id")
     )
+    @JsonIgnore
     private List<Evento> eventi;
 
 

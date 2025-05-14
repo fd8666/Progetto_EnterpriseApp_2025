@@ -19,5 +19,5 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     List<Evento> findAll();
     List<Evento> findByLuogoContainingIgnoreCase(String luogo);
     List<Evento> findByDataOraAperturaCancelliBetween(LocalDateTime dataInizio, LocalDateTime dataFine);
-
+    List<Evento> findByDataOraEventoBeforeAndDeletedEquals(LocalDateTime dataOra, Integer deleted);
 }

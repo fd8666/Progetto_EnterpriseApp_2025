@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,10 +18,12 @@ public class WishlistCondivisa {
 
     @ManyToOne
     @JoinColumn(name = "wishlist_id",nullable = false)
+    @JsonIgnore
     private Wishlist wishlist;
 
     @ManyToOne
     @JoinColumn(name = "utente_id",nullable = false)
+    @JsonIgnore
     private Utente condivisaCon;
 
 }

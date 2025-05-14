@@ -4,11 +4,14 @@ import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.dto.EventoDTO;
 import org.example.enterpriceappbackend.data.service.EventoService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -59,14 +62,30 @@ public class EventoController {
             @ApiResponse(code = 400, message = "Formato data non valido")
     })
     @GetMapping("/filtra")
-    public ResponseEntity<List<EventoDTO>> findByDataOraAperturaCancelliBetween(
+    public ResponseEntity<List<EventoDTO>> filtraEventiPerData(
             @RequestParam(required = false) String dataInizio,
-            @RequestParam(required = false) String dataFine
-    ) {
-        LocalDateTime dataInizioParsed = dataInizio != null ? LocalDateTime.parse(dataInizio) : null;
-        LocalDateTime dataFineParsed = dataFine != null ? LocalDateTime.parse(dataFine) : null;
-        List<EventoDTO> eventi = eventoService.findByDataOraAperturaCancelliBetween(dataInizioParsed, dataFineParsed);
-        return ResponseEntity.ok(eventi);
+            @RequestParam(required = false) String dataFine) {
+
+
+        try {
+            // Converti le stringhe in LocalDateTime
+            LocalDateTime startDateTime = dataInizio != null ?
+                    LocalDate.parse(dataInizio).atStartOfDay() : null;
+            LocalDateTime endDateTime = dataFine != null ?
+                    LocalDate.parse(dataFine).atTime(23, 59, 59) : null;
+
+            List<EventoDTO> eventi = eventoService.findByDataOraAperturaCancelliBetween(
+                    startDateTime,
+                    endDateTime
+            );
+
+
+            return ResponseEntity.ok(eventi);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @ApiOperation(value = "Recupera tutti gli eventi", notes = "Restituisce l'elenco completo degli eventi presenti.")
@@ -103,7 +122,10 @@ public class EventoController {
     })
     @GetMapping("/data-after")
     public ResponseEntity<List<EventoDTO>> getEventiAfterData(@RequestParam("data") String data) {
-        return ResponseEntity.ok(eventoService.findByData(LocalDateTime.parse(data)));
+        // Usa il formato corretto che corrisponde a quello che ricevi dal frontend
+        LocalDate date = LocalDate.parse(data, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDateTime dateTime = date.atStartOfDay();
+        return ResponseEntity.ok(eventoService.findByData(dateTime));
     }
 
     @ApiOperation(value = "Ricerca eventi per nome", notes = "Restituisce eventi contenenti il nome indicato.")

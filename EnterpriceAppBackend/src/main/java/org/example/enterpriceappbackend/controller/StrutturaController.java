@@ -193,7 +193,7 @@ public class StrutturaController {
             @ApiResponse(code = 404, message = "Nessuna struttura disponibile"),
             @ApiResponse(code = 500, message = "Errore interno del server")
     })
-    @GetMapping("/strutture/listaOrganizzatore")
+    @GetMapping("/listaOrganizzatore")
     public ResponseEntity<List<StrutturaInfoOrganizzatoreDTO>> listaOrganizzatore() {
         List<StrutturaInfoOrganizzatoreDTO> lista = strutturaService.getAllForOrganizzatore();
         return ResponseEntity.ok(lista);
@@ -211,7 +211,7 @@ public class StrutturaController {
             @ApiResponse(code = 404, message = "Nessuna struttura trovata per l'evento specificato"),
             @ApiResponse(code = 500, message = "Errore interno del server")
     })
-    @GetMapping("/strutture/evento/{eventoId}")
+    @GetMapping("/evento/{eventoId}")
     public ResponseEntity<StrutturaInfoUtenteDTO> getByEvento(@PathVariable Long eventoId) {
         StrutturaInfoUtenteDTO dto = strutturaService.getStrutturaByEvento(eventoId);
         return ResponseEntity.ok(dto);

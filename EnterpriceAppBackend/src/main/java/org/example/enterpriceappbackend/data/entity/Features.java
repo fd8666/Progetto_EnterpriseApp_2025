@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class Features {
 
     @OneToOne
     @JoinColumn(name = "tipo_posto_id", nullable = false)
+    @JsonIgnore
     private TipoPosto tipoPosto;
 
 }

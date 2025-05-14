@@ -89,4 +89,45 @@ public class WishlistController {
         wishlistService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @ApiOperation(value = "Rimuovi evento da Wishlist", notes = "Rimuove un evento da una wishlist esistente.")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Evento rimosso"),
+            @ApiResponse(code = 404, message = "Wishlist o evento non trovato")
+    })
+    @DeleteMapping("/{wishlistId}/evento/{eventoId}")
+    public ResponseEntity<Void> removeEventoFromWishlist(
+            @PathVariable Long wishlistId,
+            @PathVariable Long eventoId) {
+        wishlistService.removeEventoFromWishlist(wishlistId, eventoId);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @ApiOperation(value = "Aggiungi evento a Wishlist", notes = "Aggiunge un evento a una wishlist esistente.")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Evento aggiunto"),
+            @ApiResponse(code = 404, message = "Wishlist o evento non trovato")
+    })
+    @PostMapping("/{wishlistId}/evento/{eventoId}")
+    public ResponseEntity<Void> addEventoToWishlist(
+            @PathVariable Long wishlistId,
+            @PathVariable Long eventoId) {
+        wishlistService.addEventoToWishlist(wishlistId, eventoId);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @ApiOperation(value = "Recupera le Wishlist condivise con un utente", notes = "Restituisce tutte le wishlist che sono state condivise con un determinato utente.")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Wishlist condivise trovate"),
+            @ApiResponse(code = 404, message = "Nessuna wishlist condivisa trovata per l'utente")
+    })
+    @GetMapping("/condiviseCon/{utenteId}")
+    public List<WishlistDTO> getWishlistCondiviseConUtente(@PathVariable Long utenteId) {
+        return wishlistService.findCondiviseConUtente(utenteId);
+    }
+
+
+
 }
