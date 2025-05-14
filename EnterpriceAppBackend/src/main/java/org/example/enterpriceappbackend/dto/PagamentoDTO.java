@@ -8,6 +8,7 @@ import org.example.enterpriceappbackend.data.constants.StatoPagamento;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -18,10 +19,10 @@ public class PagamentoDTO {
     private String nomeTitolare;
     private String cognomeTitolare;
     private String numeroCarta;
-    private String scadenza;
+    private LocalDateTime scadenza;
     private String cvv;
     private BigDecimal importo;
-    private LocalDate dataPagamento;
+    private LocalDateTime dataPagamento;
     private StatoPagamento stato;
     private Long ordineId;
     private List<Biglietto> biglietti;

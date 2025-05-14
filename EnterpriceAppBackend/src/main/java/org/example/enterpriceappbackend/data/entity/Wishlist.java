@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,7 @@ public class Wishlist {
 
 
     @OneToMany(mappedBy = "wishlist",cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<WishlistCondivisa> condivisi;
 
 }

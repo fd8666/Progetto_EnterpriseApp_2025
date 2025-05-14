@@ -1,28 +1,32 @@
 package org.example.enterpriceappbackend.controller;
 
-import com.nimbusds.jose.JOSEException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.example.enterpriceappbackend.configuration.*;
 import lombok.RequiredArgsConstructor;
-import org.example.enterpriceappbackend.configuration.security.TokenStore;
 import org.example.enterpriceappbackend.data.entity.Utente;
+import org.example.enterpriceappbackend.data.repository.UtenteRepository;
+import org.example.enterpriceappbackend.data.service.JwtService;
 import org.example.enterpriceappbackend.data.service.UtenteService;
 import org.example.enterpriceappbackend.dto.UtenteDTO;
-import org.example.enterpriceappbackend.dto.UtenteRegistrazioneDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.enterpriceappbackend.dto.RequestAuthentication;
+import org.example.enterpriceappbackend.dto.ResponseAuthentication;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
-import java.util.Map;
-
 
 @RequiredArgsConstructor
 @RequestMapping(path="/api/utente")
@@ -31,46 +35,72 @@ import java.util.Map;
 @Api(value = "Utente API", description = "Operazioni relative alla gestione degli Utenti", tags = {"Utenti"})
 public class UtenteController {
 
-    private final TokenStore tokenStore;
-
-    @Autowired
     private final UtenteService utenteservice;
-    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UtenteRepository utenteRepository;
 
-    @ApiOperation(value = "Autenticazione di un utente")
+    @ApiOperation(value = "Login utente")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Autenticazione avvenuta con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
+            @ApiResponse(code = 201, message = "Login effettuato con successo!"),
+            @ApiResponse(code = 401, message = "Credenziali non valide!"),
             @ApiResponse(code = 404, message = "Utente non trovato!")
     })
-    @PostMapping("/Login")
-    public  ApiResponseConfiguration<String> Login(@RequestParam("email") String email, @RequestParam("password") String password) throws JOSEException {
-        // Autenticazione dell'utente con email e password
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody RequestAuthentication authentication) {
+        try {
+            Utente utente = utenteservice.AutenticazioneUtente(authentication);
 
-        String token = tokenStore.creaToken(Map.of("email", email));
+            UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                    utente.getEmail(),
+                    utente.getPassword(),
+                    List.of()
+            );
 
-        // Restituzione della risposta con il token
-        return new ApiResponseConfiguration<>(true, "autenticazione avvenuta con successo", token);
+            String jwt = jwtService.generateToken(userDetails);
+            String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+            ResponseAuthentication response = new ResponseAuthentication(jwt, refreshToken);
+
+            return ResponseEntity.ok(new ApiResponseConfiguration<>(true, "Login effettuato con successo!", response));
+
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponseConfiguration<>(false, "Utente non trovato!", null));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseConfiguration<>(false, "Credenziali non valide!", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseConfiguration<>(false, "Errore durante il login: " + e.getMessage(), null));
+        }
     }
 
     @ApiOperation(value = "Registrazione di un utente")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Registrazione avvenuta con successo!"),
+            @ApiResponse(code = 201, message = "Registrazione avvenuta con successo!"),
             @ApiResponse(code = 400, message = "Dati non validi!"),
             @ApiResponse(code = 404, message = "Utente non trovato!")
     })
-    @PostMapping("/registrazione")
-    public ApiResponseConfiguration<String> registrazione(@RequestBody UtenteRegistrazioneDTO utenteRegistrazioneDTO) {
+    @PostMapping("/register")
+    public ApiResponseConfiguration<ResponseAuthentication> register(@Valid @RequestBody UtenteDTO utenteDTO) {
         try {
-            ResponseEntity<?> response = utenteservice.RegistrazioneUtente(utenteRegistrazioneDTO);
+            if (utenteRepository.existsByEmail(utenteDTO.getEmail())) {
+                throw new IllegalArgumentException("L'email è già in uso");
+            }
 
-            // Se la registrazione è andata a buon fine, crea il token per l'utente
-            String email = utenteRegistrazioneDTO.getCredenzialiEmail(); // recupera l'email dal DTO
-            String token = tokenStore.creaToken(Map.of("email", email));
+            utenteservice.RegistrazioneUtente(utenteDTO);
 
-            return new ApiResponseConfiguration<>(true, "Registrazione avvenuta con successo", token);
+            Utente user = utenteRepository.findByEmail(utenteDTO.getEmail()).orElseThrow(() -> new UsernameNotFoundException("Utente non trovato"));
 
+            String token = jwtService.generateToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+
+            ResponseAuthentication responseAuthentication = new ResponseAuthentication(token, refreshToken);
+
+            return new ApiResponseConfiguration<>(true, "Registrazione avvenuta con successo", responseAuthentication);
+
+        } catch (IllegalArgumentException e) {
+            return new ApiResponseConfiguration<>(false, "Errore: " + e.getMessage(), null);
         } catch (Exception e) {
             return new ApiResponseConfiguration<>(false, "Errore durante la registrazione: " + e.getMessage(), null);
         }
@@ -94,58 +124,85 @@ public class UtenteController {
             @ApiResponse(code = 400, message = "Dati non validi!"),
             @ApiResponse(code = 404, message = "Utente non trovato!")
     })
-    @GetMapping("/utente")
-    public ApiResponseConfiguration<UtenteDTO> getUserData(HttpServletRequest request) {
-        UtenteDTO user = null;
-        String token = tokenStore.estraiTokenDaRichiesta(request);
-        try {
-            if (token != null && !"invalid".equals(token)) {
-                user = utenteservice.getUtenteByToken(token);
-                return new ApiResponseConfiguration<>(true, "Dati utente recuperati con successo", user);
-            } else {
-                return new ApiResponseConfiguration<>(false, "Token non valido o assente", null);
-            }
-        } catch (Exception e) {
-            return new ApiResponseConfiguration<>(false, "Errore nel recupero dei dati utente: " + e.getMessage(), null);
+    @GetMapping("/{id}")
+    public ApiResponseConfiguration<UtenteDTO> getUserData(@PathVariable @Min(1) Long id) {
+        UtenteDTO user = utenteservice.getById(id);
+        if (user!=null) {
+            return new ApiResponseConfiguration<>(true, "Dati utente recuperati con successo", user);
+        } else {
+            return new ApiResponseConfiguration<>(false, "Utente non valido o assente", null);
         }
     }
 
+    //ok
+    @PostMapping("/aggiornaPassword")
     @ApiOperation(value = "Aggiorna la password di un utente")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Password aggiornata con successo!"),
+            @ApiResponse(code = 201, message = "Password aggiornata con successo!"),
             @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
+            @ApiResponse(code = 401, message = "Token non valido o assente!"),
+            @ApiResponse(code = 500, message = "Errore interno del server!")
     })
-    @PostMapping("/updatePassword")
-    public ApiResponseConfiguration<String> updatePassword(@RequestParam("newPassword") String newPassword, HttpServletRequest request) {
-        String token = tokenStore.estraiTokenDaRichiesta(request);
+    public ApiResponseConfiguration<String> aggiornaPassword(@Valid @RequestParam("nuovaPassword") String nuovaPassword, HttpServletRequest request) {
         try {
-            if (token != null && !"invalid".equals(token)) {
-                utenteservice.AggiornaPassword(token, newPassword);
-                return new ApiResponseConfiguration<>(true, "Password aggiornata con successo", "Password aggiornata");
-            } else {
-                return new ApiResponseConfiguration<>(false, "Token non valido o assente", null);
+            String authHeader = request.getHeader("Authorization");
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return new ApiResponseConfiguration<>(false, "Token assente o malformato", null);
             }
+
+            String token1 = authHeader.substring(7);
+
+            if (!jwtService.isTokenValid(token1)) {
+                return new ApiResponseConfiguration<>(false, "Token non valido o scaduto", null);
+            }
+
+            String token2 = jwtService.extractUsername(token1);
+            utenteservice.AggiornaPassword(token2, nuovaPassword);
+
+            return new ApiResponseConfiguration<>(true, "Password aggiornata con successo", "Password aggiornata");
+
         } catch (Exception e) {
             return new ApiResponseConfiguration<>(false, "Errore durante l'aggiornamento della password: " + e.getMessage(), null);
         }
     }
 
 
-     /*google facebook*/
+    /*google*/
+
+    // ok
+    @ApiOperation(value = "Elimina un utente tramite il suo id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Utente eliminato con successo!"),
+            @ApiResponse(code = 400, message = "Dati non validi!"),
+            @ApiResponse(code = 404, message = "Utente non trovato!")
+    })
+    @DeleteMapping("/elimina/{id}")
+    public ResponseEntity<?> eliminaUtente(@PathVariable Long id) {
+        try {
+            utenteservice.deleteUtente(id);
+            return ResponseEntity.ok("Utente eliminato con successo.");
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utente non trovato.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore durante l'eliminazione dell'utente.");
+        }
+    }
 
     @ApiOperation(value = "recupera la password di un utente")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Password recuperata con successo!"),
+            @ApiResponse(code = 201, message = "Password recuperata con successo!"),
             @ApiResponse(code = 400, message = "Dati non validi!"),
             @ApiResponse(code = 404, message = "Utente non trovato!")
     })
     @PostMapping("/passwordDimenticata")
-    public ResponseEntity<String> passwordDimenticata(@RequestParam("email") String email) {
+    public ResponseEntity<String> passwordDimenticata(@RequestParam @Email @NotBlank String email){
+        String password=utenteservice.AggiornaLaPasswordTramiteEmail(email);
         try{
-            utenteservice.AggiornaLaPasswordTramiteEmail(email);
-            return new ResponseEntity<>("EMAIL INVIATA CORRETTAMENTE ", HttpStatus.OK);
+
+            return new ResponseEntity<>("EMAIL INVIATA CORRETTAMENTE "+ password, HttpStatus.OK);
         } catch (Exception e) {
+            System.out.println(password);
             return new ResponseEntity<>("ERRORE DURANTE L'INVIO DELLA EMAIL ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

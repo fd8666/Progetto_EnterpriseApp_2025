@@ -4,10 +4,11 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "Ordine")
@@ -34,9 +35,9 @@ public class Ordine {
 
     @ManyToOne
     @JoinColumn(name = "proprietario_id")
+    @JsonIgnore
     private Utente proprietario;
 
-    @OneToMany(mappedBy = "ordine", cascade = CascadeType.ALL)
-    private List<Pagamento> pagamenti;
-
+    @OneToOne(mappedBy = "ordine", cascade = CascadeType.ALL)
+    private Pagamento pagamento;
 }

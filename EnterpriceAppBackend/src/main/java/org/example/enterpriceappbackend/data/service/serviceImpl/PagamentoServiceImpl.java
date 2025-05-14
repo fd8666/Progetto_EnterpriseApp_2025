@@ -5,14 +5,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.data.entity.Ordine;
 import org.example.enterpriceappbackend.data.entity.Pagamento;
-import org.example.enterpriceappbackend.data.repository.BigliettoRepository;
 import org.example.enterpriceappbackend.data.repository.OrdineRepository;
 import org.example.enterpriceappbackend.data.repository.PagamentoRepository;
 import org.example.enterpriceappbackend.data.service.PagamentoService;
 import org.example.enterpriceappbackend.dto.PagamentoDTO;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +20,6 @@ import java.util.List;
 public class PagamentoServiceImpl implements PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
-    private final BigliettoRepository bigliettoRepository;
     private final OrdineRepository ordineRepository;
 
     @Override
@@ -85,31 +82,43 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     //----------- MAPPER INTERNO -----------//
 
-    private PagamentoDTO todto(Pagamento pagamento){
+    private PagamentoDTO todto(Pagamento pagamento) {
         PagamentoDTO dto = new PagamentoDTO();
         dto.setId(pagamento.getId());
         dto.setNomeTitolare(pagamento.getNomeTitolare());
         dto.setCognomeTitolare(pagamento.getCognomeTitolare());
-        dto.setScadenza(String.valueOf(pagamento.getScadenza()));
+        dto.setNumeroCarta(pagamento.getNumeroCarta());
+        dto.setScadenza(pagamento.getScadenza() != null ? pagamento.getScadenza() : null);
         dto.setCvv(pagamento.getCvv());
         dto.setImporto(pagamento.getImporto());
-        dto.setDataPagamento(LocalDate.from(pagamento.getDataPagamento()));
+        dto.setDataPagamento(pagamento.getDataPagamento() != null ? pagamento.getDataPagamento() : null);
         dto.setStato(pagamento.getStato());
-        dto.setOrdineId(pagamento.getOrdine().getId());
+        if (pagamento.getOrdine() != null) {
+            dto.setOrdineId(pagamento.getOrdine().getId());
+        }
         dto.setBiglietti(pagamento.getBiglietti());
 
         return dto;
     }
 
-    private Pagamento toEntity(PagamentoDTO dto){
+    private Pagamento toEntity(PagamentoDTO dto) {
         Pagamento pagamento = new Pagamento();
 
         pagamento.setNomeTitolare(dto.getNomeTitolare());
         pagamento.setCognomeTitolare(dto.getCognomeTitolare());
-        pagamento.setScadenza(LocalDateTime.parse(dto.getScadenza()));
+        pagamento.setNumeroCarta(dto.getNumeroCarta());
+
+        if (dto.getScadenza() != null) {
+            pagamento.setScadenza((dto.getScadenza()));
+        }
+
         pagamento.setCvv(dto.getCvv());
         pagamento.setImporto(dto.getImporto());
-        pagamento.setDataPagamento(LocalDateTime.from(dto.getDataPagamento()));
+
+        if (dto.getDataPagamento() != null) {
+            pagamento.setDataPagamento(dto.getDataPagamento());
+        }
+
         pagamento.setStato(dto.getStato());
         pagamento.setBiglietti(dto.getBiglietti());
 

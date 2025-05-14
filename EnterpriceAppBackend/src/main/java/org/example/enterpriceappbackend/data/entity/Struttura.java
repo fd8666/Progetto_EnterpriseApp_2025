@@ -3,6 +3,8 @@ package org.example.enterpriceappbackend.data.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import net.minidev.json.annotate.JsonIgnore;
+
 import java.util.List;
 
 @Entity
@@ -37,9 +39,11 @@ public class Struttura {
     private String coordinateLongitude;
 
     @OneToMany(mappedBy = "struttura", cascade = CascadeType.ALL,fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
     private List<Zona> zone;
 
     @OneToMany(mappedBy = "struttura", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Evento> eventi;
 
 }

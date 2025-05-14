@@ -1,47 +1,39 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
-import com.nimbusds.jose.JOSEException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-//import org.example.enterpriceappbackend.configuration.security.TokenStore;
-import org.example.enterpriceappbackend.configuration.ApiResponseConfiguration;
-import org.example.enterpriceappbackend.configuration.security.TokenStore;
+import lombok.extern.slf4j.Slf4j;
 import org.example.enterpriceappbackend.data.constants.Messaggi;
 import org.example.enterpriceappbackend.data.constants.Role;
 import org.example.enterpriceappbackend.data.entity.Utente;
 import org.example.enterpriceappbackend.data.repository.UtenteRepository;
+import org.example.enterpriceappbackend.data.service.JwtService;
 import org.example.enterpriceappbackend.data.service.UtenteService;
 import org.example.enterpriceappbackend.dto.UtenteDTO;
-//import org.example.enterpriceappbackend.dto.UtenteRegistrazioneDTO;
-import org.example.enterpriceappbackend.dto.UtenteLoginDTO;
-import org.example.enterpriceappbackend.dto.UtenteRegistrazioneDTO;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.example.enterpriceappbackend.dto.RequestAuthentication;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.token.TokenService;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-
+@Transactional
+@Slf4j
 public class UtenteServiceImpl implements UtenteService {
 
     private final UtenteRepository utenteRepository;
-    private final TokenStore tokenStore;
     private final PasswordEncoder passwordEncoder;
     private final Messaggi messaggi;
     private final JavaMailSender mailSender;
+    private final JwtService jwtService;
 
 
     @Override
@@ -50,63 +42,75 @@ public class UtenteServiceImpl implements UtenteService {
     }
 
     @Override
-    public ResponseEntity<?> RegistrazioneUtente(UtenteRegistrazioneDTO utenteRegistrazione) throws Exception {
+    public void RegistrazioneUtente(UtenteDTO utenteDTO) throws Exception {
 
-        if (utenteRepository.existsByEmail(utenteRegistrazione.getCredenzialiEmail())) {
-            return new ResponseEntity<>("L'email è già in uso", HttpStatus.BAD_REQUEST);
+        if (utenteRepository.existsByEmail(utenteDTO.getEmail())){
+            throw new IllegalArgumentException("L'email è già in uso");
         }
 
-        UtenteDTO nuovoUtente = new UtenteDTO();
-        nuovoUtente.setNome(utenteRegistrazione.getNome());
-        nuovoUtente.setCognome(utenteRegistrazione.getCognome());
-        nuovoUtente.setEmail(utenteRegistrazione.getCredenzialiEmail());
-        nuovoUtente.setPassword(passwordEncoder.encode(utenteRegistrazione.getCredenzialiPassword()));  // Assicurati di usare un encoder per la password
-        nuovoUtente.setRole("USER");
-        Utente utenteSalvato = utenteRepository.save(toEntity(nuovoUtente));
+        Utente nuovoUtente = new Utente();
+        nuovoUtente.setNome(utenteDTO.getNome());
+        nuovoUtente.setCognome(utenteDTO.getCognome());
+        nuovoUtente.setNumeroTelefono(utenteDTO.getNumerotelefono());
+        nuovoUtente.setEmail(utenteDTO.getEmail());
+        nuovoUtente.setPassword(passwordEncoder.encode(utenteDTO.getPassword()));
+        nuovoUtente.setRole(Role.USER);
 
-        String token = tokenStore.creaToken(Map.of("email", utenteSalvato.getEmail()));
-
-        return new ResponseEntity<>(new ApiResponseConfiguration<>(true, "Registrazione completata con successo", token), HttpStatus.CREATED);
+        utenteRepository.save(nuovoUtente);
     }
 
     @Override
-    public ResponseEntity<?> AutenticazioneUtente(UtenteLoginDTO utenteLoginDTO) throws JOSEException {
-        Optional<Utente> optionalUtente = utenteRepository.findByEmail(utenteLoginDTO.getCredenzialiEmail());
+    @Transactional
+    public Utente getOrCreateUser(String email) {
+        log.info("Cercando utente con email: {}", email);
 
-        if(optionalUtente.isPresent()){
-            Utente utente = optionalUtente.get();
+        Optional<Utente> existingUser = utenteRepository.findByEmail(email);
 
-            if(passwordEncoder.matches(utenteLoginDTO.getCredenzialiPassword(),utente.getPassword())){
-                String token = tokenStore.creaToken(Map.of("email", utente.getEmail()));
-                return new ResponseEntity<>(new ApiResponseConfiguration<>(true,"autenticazione riuscita", token),HttpStatus.OK);
-            }else{
-                return new ResponseEntity<>("Credenziali non valide", HttpStatus.UNAUTHORIZED);
-            }
-        }else{
-            return new ResponseEntity<>("utente non trovato", HttpStatus.NOT_FOUND);
+        if (existingUser.isPresent()) {
+            Utente utente = existingUser.get();
+            log.info("Utente esistente trovato: {} con ruolo: {}", email, utente.getRole());
+            return utente;
+        } else {
+            log.info("Utente non trovato, creando nuovo utente con email: {}", email);
+
+            Utente nuovoUtente = new Utente();
+            nuovoUtente.setEmail(email);
+            nuovoUtente.setPassword(passwordEncoder.encode("defaultPassword")); // Imposta una password predefinita
+            nuovoUtente.setRole(Role.USER);
+            nuovoUtente.setNome("Nuovo Utente"); // Imposta un nome di default se necessario
+
+            Utente savedUser = utenteRepository.save(nuovoUtente);
+            log.info("Nuovo utente salvato nel DB: {} con ID: {} e ruolo: {}",
+                    savedUser.getEmail(), savedUser.getId(), savedUser.getRole());
+
+            return savedUser;
         }
     }
 
     @Override
-    public UtenteDTO getUtenteByToken(String token) throws Exception {
-        Optional<Utente> utente = tokenStore.getUtenteDaToken(token);
-        if(utente.isPresent()){
-            return toDto(utente.get());
+    public Utente AutenticazioneUtente(RequestAuthentication credenziali) {
+        Utente utente = utenteRepository.findByEmail(credenziali.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Utente non trovato"));
+
+        if (!passwordEncoder.matches(credenziali.getPassword(), utente.getPassword())) {
+            throw new BadCredentialsException("Credenziali errate");
         }
-        throw new Exception("utente non trovato! ");
+        return utente;
+    }
+
+    @Override
+    public UtenteDTO getById(Long id) {
+        Utente utente = utenteRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(String.format("Non esiste un utente con id: [%s]", id)));
+        return toDto(utente);
     }
 
     @Override
     public void AggiornaPassword(String token, String newPassword) throws Exception {
-        String email = tokenStore.getEmailDaToken(token);
-        Optional<Utente> optionalUtente = utenteRepository.findByEmail(email);
+        String email = jwtService.extractUsername(token);
 
-        if (optionalUtente.isEmpty()) {
-            throw new Exception("Utente non trovato");
-        }
-
-        Utente utente = optionalUtente.get();
+        Utente utente = utenteRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Utente non trovato"));
         utente.setPassword(passwordEncoder.encode(newPassword));
+
         utenteRepository.save(utente);
     }
 
@@ -117,11 +121,11 @@ public class UtenteServiceImpl implements UtenteService {
 
     @Override
     public void deleteUtente(Long id) {
-        utenteRepository.deleteById(id);
+        utenteRepository.deleteUtenteById(id);
     }
 
     @Override
-    public void AggiornaLaPasswordTramiteEmail(String email) {
+    public String AggiornaLaPasswordTramiteEmail(String email) {
         Optional<Utente> optionalUtente = utenteRepository.findByEmail(email);
 
         if (optionalUtente.isPresent()) {
@@ -139,8 +143,13 @@ public class UtenteServiceImpl implements UtenteService {
 
             String messaggio = messaggi.recuperoPassword(utente.getNome(), nuovaPassword);
             sendEmail(email, "Recupero Password", messaggio);
+
+            return nuovaPassword;
         }
+
+        return null;
     }
+
 
     public void sendEmail(String to, String soggetto, String testo){
         SimpleMailMessage mailMessage = new SimpleMailMessage();
@@ -150,45 +159,32 @@ public class UtenteServiceImpl implements UtenteService {
         mailSender.send(mailMessage);
     }
 
-
-    public UserDetails loadUtenteByUsername(String email) throws UsernameNotFoundException {
-        Optional<Utente> utente = utenteRepository.findByEmail(email);
-        if(utente.isPresent()) {
-            Utente utenteDB = utente.get();
-            List<SimpleGrantedAuthority> authorities;
-            if (utenteDB.getRole().equals(Role.ADMIN)) {
-                authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            } else {
-                authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-            }
-            return new User(utenteDB.getEmail(), utenteDB.getPassword(), authorities);
-        }
-        throw new UsernameNotFoundException("User not found");
-    }
-
     // ---------- MAPPER INTERNO ----------------//
 
     private UtenteDTO toDto(Utente utente){
         UtenteDTO dto = new UtenteDTO();
         dto.setId(utente.getId());
-        dto.setEmail(utente.getEmail());
-        dto.setPassword(utente.getPassword());
         dto.setNome(utente.getNome());
         dto.setCognome(utente.getCognome());
+        dto.setNumerotelefono(utente.getNumeroTelefono());
+        dto.setEmail(utente.getEmail());
+        dto.setPassword(utente.getPassword());
         dto.setRole(String.valueOf(utente.getRole()));
 
         return dto;
     }
 
-    private Utente toEntity(UtenteDTO dto){
+    private Utente toEntity(UtenteDTO dto) {
         Utente utente = new Utente();
 
-        utente.setEmail(dto.getEmail());
-        utente.setPassword(dto.getPassword());
         utente.setNome(dto.getNome());
         utente.setCognome(dto.getCognome());
+        utente.setNumeroTelefono(dto.getNumerotelefono());
+        utente.setEmail(dto.getEmail());
+        utente.setPassword(dto.getPassword());
         utente.setRole(Role.valueOf(dto.getRole()));
 
         return utente;
     }
+
 }

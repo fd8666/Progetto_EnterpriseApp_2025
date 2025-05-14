@@ -1,12 +1,15 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 import org.example.enterpriceappbackend.data.constants.StatoPagamento;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,7 +18,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Pagamento {
 
     @Id
@@ -48,10 +50,13 @@ public class Pagamento {
     @Column(nullable = false)
     private StatoPagamento stato;
 
-    @ManyToOne
-    @JoinColumn(name = "ordine_id",referencedColumnName = "id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "ordine_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private Ordine ordine;
 
     @OneToMany(mappedBy = "pagamento", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Biglietto> biglietti;
 }
+

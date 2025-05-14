@@ -51,12 +51,15 @@ public class Evento {
     private TagCategoria categoria;
 
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Biglietto> biglietti;
 
     @ManyToOne
     @JoinColumn(name = "struttura_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private Struttura struttura;
 
     @OneToMany(mappedBy = "evento",cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<TipoPosto> tipiPosto;
 }

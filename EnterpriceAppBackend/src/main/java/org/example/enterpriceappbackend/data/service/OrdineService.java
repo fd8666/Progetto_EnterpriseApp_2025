@@ -11,11 +11,13 @@ public interface OrdineService {
 
     List<OrdineDTO> findByProprietario(Long proprietarioId);
 
-    Long save(OrdineDTO ordineDTO);
+    void save(OrdineDTO ordineDTO);
 
     OrdineDTO update(Long id, OrdineDTO ordineDTO);
 
     void delete(Long id);
+
+    OrdineDTO aggiungiOrdine(OrdineDTO ordineDTO,Long idproprietario);
 
     OrdineDTO createOrdineWithPagamento(OrdineDTO ordinedto, Long eventoId, Long tipoPostoId, int quantita);
 

@@ -8,11 +8,13 @@ import org.example.enterpriceappbackend.data.entity.Pagamento;
 import org.example.enterpriceappbackend.data.entity.Utente;
 import org.example.enterpriceappbackend.data.repository.OrdineRepository;
 import org.example.enterpriceappbackend.data.repository.PagamentoRepository;
+import org.example.enterpriceappbackend.data.repository.UtenteRepository;
 import org.example.enterpriceappbackend.data.service.OrdineService;
 import org.example.enterpriceappbackend.dto.OrdineDTO;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class OrdineServiceImpl implements OrdineService {
 
     private final OrdineRepository ordineRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final UtenteRepository utenteRepository;
 
     @Override
     @Transactional
@@ -33,32 +36,92 @@ public class OrdineServiceImpl implements OrdineService {
     }
 
     @Override
-    public Long save(OrdineDTO ordineDTO) {
-        Ordine ordine = toEntity(ordineDTO);
-        ordine = ordineRepository.save(ordine);
-        return ordine.getId();
+    @Transactional
+    public OrdineDTO aggiungiOrdine(OrdineDTO ordineDTO, Long proprietarioId) {
+        Optional<Utente> utenteOpt = utenteRepository.findById(proprietarioId);
+
+        if (utenteOpt.isEmpty()) {
+            throw new RuntimeException("Utente non trovato con ID: " + proprietarioId);
+        }
+
+        Utente proprietario = utenteOpt.get();
+
+        Ordine ordine = new Ordine();
+        ordine.setEmailProprietario(proprietario.getEmail());
+        ordine.setPrezzoTotale(ordineDTO.getPrezzoTotale());
+        ordine.setProprietario(proprietario);
+        ordine.setDataCreazione(LocalDateTime.now()); // <-- ORA CORRENTE
+
+        Pagamento pagamento = new Pagamento();
+        pagamento.setNomeTitolare(ordineDTO.getPagamento().getNomeTitolare());
+        pagamento.setCognomeTitolare(ordineDTO.getPagamento().getCognomeTitolare());
+        pagamento.setNumeroCarta(ordineDTO.getPagamento().getNumeroCarta());
+        pagamento.setScadenza(ordineDTO.getPagamento().getScadenza());
+        pagamento.setCvv(ordineDTO.getPagamento().getCvv());
+        pagamento.setImporto(ordineDTO.getPagamento().getImporto());
+        pagamento.setDataPagamento(LocalDateTime.now()); // <-- ORA CORRENTE
+        pagamento.setStato(ordineDTO.getPagamento().getStato());
+
+        pagamento.setOrdine(ordine);
+        ordine.setPagamento(pagamento);
+
+        Ordine ordineSalvato = ordineRepository.save(ordine);
+
+        return todto(ordineSalvato);
     }
 
     @Override
-    public void delete(Long id) {ordineRepository.deleteById(id);}
+    public void save(OrdineDTO ordineDTO) {
+        Ordine ordine = toEntity(ordineDTO);
+        ordineRepository.save(ordine);
+    }
+
+    @Override
+    public void delete(Long id) {
+        Ordine ordine = ordineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ordine non trovato con id: " + id));
+        ordineRepository.delete(ordine);
+    }
 
     @Override
     public OrdineDTO update(Long id, OrdineDTO ordineDTO) {
         Ordine ordineEsistente = ordineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ordine non trovato con id: " + id));
 
-        ordineEsistente.setPagamenti(ordineDTO.getPagamenti());
         ordineEsistente.setDataCreazione(ordineDTO.getDataCreazione());
         ordineEsistente.setEmailProprietario(ordineDTO.getEmailProprietario());
-        ordineEsistente.setPrezzoTotale(ordineDTO.getPrezzoTotale());
 
-        if (ordineDTO.getProprietarioId() != null) {
-            Utente proprietario = new Utente();
-            proprietario.setId(ordineDTO.getProprietarioId());
-            ordineEsistente.setProprietario(proprietario);
+
+        if (ordineDTO.getPrezzoTotale() != null) {
+            ordineEsistente.setPrezzoTotale(ordineDTO.getPrezzoTotale());
+        }
+
+
+        if (ordineDTO.getPagamento() != null) {
+            Pagamento pagamentoDTO = ordineDTO.getPagamento();
+            Pagamento nuovoPagamento = ordineEsistente.getPagamento();
+
+            if (nuovoPagamento == null) {
+                nuovoPagamento = new Pagamento();
+                nuovoPagamento.setOrdine(ordineEsistente);  // Associa l'ordine al pagamento
+            }
+
+            nuovoPagamento.setNomeTitolare(pagamentoDTO.getNomeTitolare());
+            nuovoPagamento.setCognomeTitolare(pagamentoDTO.getCognomeTitolare());
+            nuovoPagamento.setNumeroCarta(pagamentoDTO.getNumeroCarta());
+            nuovoPagamento.setScadenza(pagamentoDTO.getScadenza());
+            nuovoPagamento.setCvv(pagamentoDTO.getCvv());
+            nuovoPagamento.setImporto(pagamentoDTO.getImporto());
+            nuovoPagamento.setDataPagamento(LocalDateTime.now());
+            nuovoPagamento.setStato(pagamentoDTO.getStato());
+
+            ordineEsistente.setPagamento(nuovoPagamento);
+
+            ordineEsistente.setPrezzoTotale(nuovoPagamento.getImporto().doubleValue());
         }
 
         ordineEsistente = ordineRepository.save(ordineEsistente);
+
         return todto(ordineEsistente);
     }
 
@@ -75,7 +138,7 @@ public class OrdineServiceImpl implements OrdineService {
 
         pagamentoRepository.save(pagamento);
 
-        ordine.getPagamenti().add(pagamento);
+        ordine.setPagamento(pagamento);
         ordine = ordineRepository.save(ordine);
 
         return todto(ordine);
@@ -83,30 +146,34 @@ public class OrdineServiceImpl implements OrdineService {
 
     // -------------MAPPER INTERNO----------------//
 
-    private OrdineDTO todto(Ordine ordine){
+    private OrdineDTO todto(Ordine ordine) {
         OrdineDTO dto = new OrdineDTO();
         dto.setId(ordine.getId());
-        dto.setPagamenti(ordine.getPagamenti());
+        dto.setPagamento(ordine.getPagamento());
         dto.setDataCreazione(ordine.getDataCreazione());
         dto.setEmailProprietario(ordine.getEmailProprietario());
         dto.setPrezzoTotale(ordine.getPrezzoTotale());
-        dto.setProprietarioId(ordine.getProprietario().getId());
-
+        dto.setProprietarioId(
+                ordine.getProprietario() != null ? ordine.getProprietario().getId() : null
+        );
         return dto;
     }
 
-    private Ordine toEntity(OrdineDTO dto){
+    private Ordine toEntity(OrdineDTO dto) {
         Ordine ordine = new Ordine();
-        ordine.setPagamenti(dto.getPagamenti());
         ordine.setDataCreazione(dto.getDataCreazione());
         ordine.setEmailProprietario(dto.getEmailProprietario());
         ordine.setPrezzoTotale(dto.getPrezzoTotale());
-        if (dto.getProprietarioId() != null){
+        if (dto.getProprietarioId() != null) {
             Utente proprietario = new Utente();
             proprietario.setId(dto.getProprietarioId());
             ordine.setProprietario(proprietario);
         }
-
+        if (dto.getPagamento() != null) {
+            Pagamento pagamento = dto.getPagamento();
+            pagamento.setOrdine(ordine);
+            ordine.setPagamento(pagamento);
+        }
         return ordine;
     }
 }

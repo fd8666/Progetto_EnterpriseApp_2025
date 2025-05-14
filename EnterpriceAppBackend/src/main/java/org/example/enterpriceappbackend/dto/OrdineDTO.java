@@ -15,7 +15,7 @@ import java.util.List;
 public class OrdineDTO {
 
     private Long id;
-    private List<Pagamento> pagamenti;
+    private Pagamento pagamento;
     private LocalDateTime dataCreazione;
     private String emailProprietario;
     private Double prezzoTotale;

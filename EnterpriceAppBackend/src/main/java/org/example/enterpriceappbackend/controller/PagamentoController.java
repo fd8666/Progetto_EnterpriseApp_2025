@@ -27,7 +27,7 @@ public class PagamentoController {
             @ApiResponse(code = 400, message = "Dati non validi"),
             @ApiResponse(code = 404, message = "Utente non trovato")
     })
-    @GetMapping("/utente/{utenteId}")
+    @GetMapping("/{utenteId}") //funzionante
     public ResponseEntity<List<PagamentoDTO>> getPagamentoByUtente(@PathVariable Long utenteId) {
         return ResponseEntity.ok(pagamentoService.findByUtenteId(utenteId));
     }
@@ -37,7 +37,7 @@ public class PagamentoController {
             @ApiResponse(code = 200, message = "Pagamento creato con successo"),
             @ApiResponse(code = 400, message = "Richiesta non valida")
     })
-    @PostMapping
+    @PostMapping("/createPagamento") //funzionante
     public ResponseEntity<PagamentoDTO> createPagamento(@RequestBody PagamentoDTO pagamentoDTO) {
         PagamentoDTO creato = pagamentoService.create(pagamentoDTO);
         return ResponseEntity.ok(creato);

@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,15 +35,18 @@ public class Biglietto {
 
     @ManyToOne
     @JoinColumn(name = "evento_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private Evento evento;
 
     @ManyToOne
     @JoinColumn(name = "tipo_posto_id", referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private TipoPosto tipoPosto;
 
 
     @ManyToOne
     @JoinColumn(name = "pagamento_id", referencedColumnName = "id")//opzionale in caso di pagamento non ancora effettuato
+    @JsonIgnore
     private Pagamento pagamento;
 
     @CreatedDate
