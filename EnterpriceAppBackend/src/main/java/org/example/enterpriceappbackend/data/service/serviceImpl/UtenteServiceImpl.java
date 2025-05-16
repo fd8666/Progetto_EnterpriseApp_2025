@@ -169,7 +169,7 @@ public class UtenteServiceImpl implements UtenteService {
         dto.setNumerotelefono(utente.getNumeroTelefono());
         dto.setEmail(utente.getEmail());
         dto.setPassword(utente.getPassword());
-        dto.setRole(String.valueOf(utente.getRole()));
+        dto.setRole(String.valueOf(Role.USER));
 
         return dto;
     }

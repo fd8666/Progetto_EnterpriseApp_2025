@@ -57,6 +57,7 @@ public class UtenteController {
             );
 
             String jwt = jwtService.generateToken(userDetails);
+            System.out.println(jwt);
             String refreshToken = jwtService.generateRefreshToken(userDetails);
 
             ResponseAuthentication response = new ResponseAuthentication(jwt, refreshToken);

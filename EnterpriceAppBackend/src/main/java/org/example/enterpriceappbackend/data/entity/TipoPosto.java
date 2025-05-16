@@ -27,6 +27,10 @@ public class TipoPosto {
     @Column(name = "PostiDisponibili")
     private int postiDisponibili;
 
+
+    @OneToMany(mappedBy = "tipoPosto",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Biglietto> biglietti;
+
     @ManyToOne
     @JoinColumn(name = "evento_id",nullable = false)
     @JsonBackReference

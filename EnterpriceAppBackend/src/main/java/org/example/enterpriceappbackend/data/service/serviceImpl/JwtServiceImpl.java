@@ -52,6 +52,7 @@ public class JwtServiceImpl implements JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
+
         return buildToken(userDetails, jwtExpiration);
     }
 

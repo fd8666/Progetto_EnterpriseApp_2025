@@ -54,16 +54,33 @@ public class SecurityConfiguration {
 
                                 "/api/utente/login",
                                 "/api/utente/register",
-                                "/api/utente/passwordDimenticata",
                                 "api/utente/aggiornaPassword",
                                 "/api/utente/allUtenti",
                                 "/api/utente/elimina/{id}",
-                                "/api/utente/{id}",
+                                "/api/utente/{id}"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/tipi-posto/{id}",
+                                "api/wishlist/condiviseCon/{id}",
                                 "/api/ordine/aggiungi",
                                 "/api/ordine/aggiorna/",
                                 "api/ordine/elimina/",
-                                "api/wishlist/condiviseCon/"
-                        ).permitAll()
+                                "/api/wishlist/condivisa/create",
+                                "/api/wishlist/condivisa/remove/1/1",
+                                "/api/wishlist/condivisa/remove-by-wishlist/1",
+                                "/api/wishlist/condivisa/by-wishlist/1",
+                                "/api/tipi-posto/create",
+                                "/api/tipi-posto/evento/1",
+                                "/api/tipi-posto/total-posti/1",
+                                "/api/tipi-posto/by-prezzo/50.00",
+                                "/api/biglietto/1",
+                                "/api/biglietto/1/spettatore",
+                                "/api/biglietto/tipo-posto/1",
+                                "/api/biglietto/1/prezzo",
+                                "/api/biglietto/utente/1",
+                                "/api/biglietto/evento/1",
+                                "/api/biglietto/create"
+                                ).hasRole("USER").anyRequest().authenticated()
 
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

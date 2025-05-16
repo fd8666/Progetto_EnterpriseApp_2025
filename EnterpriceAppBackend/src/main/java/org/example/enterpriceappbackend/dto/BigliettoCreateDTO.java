@@ -22,5 +22,10 @@ public class BigliettoCreateDTO {//per la creazione dei vari biglietti
     private Long eventoId;
 
     @NotNull
-    private Long postoId;
+    private Long TipoPostoId;
+
+    @NotNull
+    private Long pagamentoId;
+
+
 }

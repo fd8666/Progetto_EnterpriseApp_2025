@@ -33,7 +33,7 @@ public class SchedulingConfig {
     /**
      * Scheduler che esegue il controllo dei biglietti non pagati ogni giorno a mezzanotte
      */
-    @Scheduled(cron = "0 * * * * ?") // Esegui ogni giorno a mezzanotte
+    @Scheduled(cron = "0 0 3 * * ?") // Esegui ogni giorno a mezzanotte
     public void checkBigliettiScadutiSchedule() {
         log.info(String.format("Controllo biglietti non pagati avviato alle [%s]", formatter.format(LocalDateTime.now())));
         bigliettoService.checkBigliettiScaduti();

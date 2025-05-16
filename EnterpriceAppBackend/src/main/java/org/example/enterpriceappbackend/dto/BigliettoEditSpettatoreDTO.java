@@ -9,6 +9,8 @@ import lombok.Data;
 @Data
 public class BigliettoEditSpettatoreDTO {
 
+    private long id;
+
     @NotBlank(message = "Il nome dello spettatore è campo obbligatorio!")
     @Size(min = 3, max = 30)
     @Pattern(regexp = "^[A-Za-zÀ-ÖØ-öø-ÿ]+(?: [A-Za-zÀ-ÖØ-öø-ÿ]+)*$", message = "Il nome deve contenere solo lettere e spazi.")
@@ -21,5 +23,6 @@ public class BigliettoEditSpettatoreDTO {
 
     @Email
     private String emailSpettatore;
+
 
 }
