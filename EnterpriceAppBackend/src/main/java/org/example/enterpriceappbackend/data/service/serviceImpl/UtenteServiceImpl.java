@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -58,34 +59,70 @@ public class UtenteServiceImpl implements UtenteService {
 
         utenteRepository.save(nuovoUtente);
     }
-
-    @Override
     @Transactional
-    public Utente getOrCreateUser(String email) {
-        log.info("Cercando utente con email: {}", email);
+    @Override
+    public Utente getOrCreateUser(String email, Map<String, Object> attributes) {
+        log.info("Verifica utente con email (OAuth2): {}", email);
 
-        Optional<Utente> existingUser = utenteRepository.findByEmail(email);
+        Optional<Utente> optionalUtente = utenteRepository.findByEmail(email);
 
-        if (existingUser.isPresent()) {
-            Utente utente = existingUser.get();
-            log.info("Utente esistente trovato: {} con ruolo: {}", email, utente.getRole());
-            return utente;
+        String nomeOAuth = (attributes.get("given_name") != null) ? attributes.get("given_name").toString() :
+                (attributes.get("name") != null) ? attributes.get("name").toString() : "Utente";
+
+        String cognomeOAuth = (attributes.get("family_name") != null) ? attributes.get("family_name").toString() : "";
+
+        Utente utente;
+        boolean updated = false;
+
+        if (optionalUtente.isPresent()) {
+            utente = optionalUtente.get();
+
+            if (utente.getNome() == null || utente.getNome().isEmpty()) {
+                utente.setNome(nomeOAuth);
+                updated = true;
+            }
+
+            if (utente.getCognome() == null || utente.getCognome().isEmpty()) {
+                utente.setCognome(cognomeOAuth);
+                updated = true;
+            }
+
+            if (utente.getRole() == null) {
+                utente.setRole(Role.USER);
+                updated = true;
+            }
+
+            if (updated) {
+                utenteRepository.save(utente);
+                log.info("Utente aggiornato con info da OAuth2: {}", email);
+            } else {
+                log.info("Utente esistente trovato senza modifiche: {}", email);
+            }
+
         } else {
-            log.info("Utente non trovato, creando nuovo utente con email: {}", email);
+            // Crea nuovo utente
+            utente = Utente.builder()
+                    .email(email)
+                    .nome(nomeOAuth)
+                    .cognome(cognomeOAuth)
+                    .password(passwordEncoder.encode(generateRandomPassword()))
+                    .role(Role.USER)
+                    .build();
 
-            Utente nuovoUtente = new Utente();
-            nuovoUtente.setEmail(email);
-            nuovoUtente.setPassword(passwordEncoder.encode("defaultPassword")); // Imposta una password predefinita
-            nuovoUtente.setRole(Role.USER);
-            nuovoUtente.setNome("Nuovo Utente"); // Imposta un nome di default se necessario
-
-            Utente savedUser = utenteRepository.save(nuovoUtente);
-            log.info("Nuovo utente salvato nel DB: {} con ID: {} e ruolo: {}",
-                    savedUser.getEmail(), savedUser.getId(), savedUser.getRole());
-
-            return savedUser;
+            utenteRepository.save(utente);
+            log.info("Nuovo utente creato da OAuth2: {} con nome: {}", email, nomeOAuth);
         }
+
+        return utente;
     }
+
+    private String generateRandomPassword() {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] randomBytes = new byte[12];
+        secureRandom.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+    }
+
 
     @Override
     public Utente AutenticazioneUtente(RequestAuthentication credenziali) {

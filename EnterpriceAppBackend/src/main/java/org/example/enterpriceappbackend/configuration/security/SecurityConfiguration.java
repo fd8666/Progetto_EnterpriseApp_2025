@@ -40,6 +40,9 @@ public class SecurityConfiguration {
     @Autowired
     private CorsConfigurationSource corsConfigurationSource;
 
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserServi;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
@@ -50,44 +53,49 @@ public class SecurityConfiguration {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/utente/allUtenti").hasRole("ADMIN")
+                        .requestMatchers("/api/utente/elimina/**").hasRole("ADMIN")
+                        .requestMatchers("/api/evento/create").hasRole("ADMIN")
+                        .requestMatchers("/api/tipi-posto/create").hasRole("ADMIN")
+                        .requestMatchers("/api/evento/organizzatore/{organizzatoreId}").hasRole("ADMIN")
+                        .requestMatchers("/api/evento/update/{id}").hasRole("ADMIN")
+                        .requestMatchers("/api/evento/delete/{id}").hasRole("ADMIN")
+                        .requestMatchers("/api/biglietto/evento/{eventoId}").hasRole("ADMIN")
+                        .requestMatchers("/api/features/save").hasRole("ADMIN")
+                        .requestMatchers("/api/strutture/**").hasRole("ADMIN")
+                        .requestMatchers("/api/tag-categoria").hasRole("ADMIN")
+                        .requestMatchers("/organizzatore/{organizzatoreId}").hasRole("ADMIN")
+                        .requestMatchers("/api/zone/**").hasRole("ADMIN")
                         .requestMatchers(
-
                                 "/api/utente/login",
                                 "/api/utente/register",
-                                "api/utente/aggiornaPassword",
-                                "/api/utente/allUtenti",
-                                "/api/utente/elimina/{id}",
-                                "/api/utente/{id}"
+                                "/api/utente/passwordDimenticata",
+                                "/oauth2/**",
+                                "/login/**",
+                                "/oauth/success",
+                                "/api/ordine/aggiungi"
                         ).permitAll()
-                        .requestMatchers(
-                                "/api/tipi-posto/{id}",
-                                "api/wishlist/condiviseCon/{id}",
-                                "/api/ordine/aggiungi",
-                                "/api/ordine/aggiorna/",
-                                "api/ordine/elimina/",
-                                "/api/wishlist/condivisa/create",
-                                "/api/wishlist/condivisa/remove/1/1",
-                                "/api/wishlist/condivisa/remove-by-wishlist/1",
-                                "/api/wishlist/condivisa/by-wishlist/1",
-                                "/api/tipi-posto/create",
-                                "/api/tipi-posto/evento/1",
-                                "/api/tipi-posto/total-posti/1",
-                                "/api/tipi-posto/by-prezzo/50.00",
-                                "/api/biglietto/1",
-                                "/api/biglietto/1/spettatore",
-                                "/api/biglietto/tipo-posto/1",
-                                "/api/biglietto/1/prezzo",
-                                "/api/biglietto/utente/1",
-                                "/api/biglietto/evento/1",
-                                "/api/biglietto/create"
-                                ).hasRole("USER").anyRequest().authenticated()
-
+                        .requestMatchers("/api/**").hasRole("USER")
+                        .requestMatchers("api/strutture/{id}/map").hasRole("USER")
+                        .requestMatchers("api/strutture/evento/{eventoId}").hasRole("USER")
+                        .requestMatchers("api/strutture/evento/{id}/utente").hasRole("USER")
+                        .anyRequest().denyAll()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Permettiamo sessione se richiesta (per gestire OAuth2), seno blocca la richiesta
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .oauth2Login(oauth2 -> oauth2
+                        .defaultSuccessUrl("/oauth/success", true)
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserServi)
+                        )
+                )
                 .build();
     }
+
 
     @Bean
     public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {

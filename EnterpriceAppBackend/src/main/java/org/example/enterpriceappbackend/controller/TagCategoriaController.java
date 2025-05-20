@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-@RequestMapping("/api/tagcategoria")
+@RequestMapping("/api/tag-categoria")
 @RequiredArgsConstructor
 @Api(value = "TagCategoria API", description = "Operazioni relative alla gestione delle categorie dei tag", tags = {"TagCategoria"})
 public class TagCategoriaController {

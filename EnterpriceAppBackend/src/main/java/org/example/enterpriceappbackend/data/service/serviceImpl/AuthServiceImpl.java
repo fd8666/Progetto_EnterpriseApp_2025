@@ -26,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public OAuth2User createOAuth2UserWithAuthorities(Map<String, Object> attributes, String email, String nameAttributeKey) {
-        Utente utente = utenteService.getOrCreateUser(email);
+        Utente utente = utenteService.getOrCreateUser(email, attributes);
         log.info("Utente trovato/creato nel database: {} con ruoli: {}", utente.getEmail(), utente.getRole());
 
         Collection<GrantedAuthority> authorities = convertRolesToAuthorities(utente.getRole());

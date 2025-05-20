@@ -5,6 +5,7 @@ import org.example.enterpriceappbackend.dto.UtenteDTO;
 import org.example.enterpriceappbackend.dto.RequestAuthentication;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UtenteService {
 
@@ -22,7 +23,7 @@ public interface UtenteService {
 
     void deleteUtente(Long id);
 
-    Utente getOrCreateUser(String email);
+    Utente getOrCreateUser(String email, Map<String, Object> attributes);
 
     String AggiornaLaPasswordTramiteEmail(String email);
 }
