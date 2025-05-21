@@ -50,25 +50,12 @@ public class OrdineServiceImpl implements OrdineService {
         ordine.setEmailProprietario(proprietario.getEmail());
         ordine.setPrezzoTotale(ordineDTO.getPrezzoTotale());
         ordine.setProprietario(proprietario);
-        ordine.setDataCreazione(LocalDateTime.now()); // <-- ORA CORRENTE
-
-        Pagamento pagamento = new Pagamento();
-        pagamento.setNomeTitolare(ordineDTO.getPagamento().getNomeTitolare());
-        pagamento.setCognomeTitolare(ordineDTO.getPagamento().getCognomeTitolare());
-        pagamento.setNumeroCarta(ordineDTO.getPagamento().getNumeroCarta());
-        pagamento.setScadenza(ordineDTO.getPagamento().getScadenza());
-        pagamento.setCvv(ordineDTO.getPagamento().getCvv());
-        pagamento.setImporto(ordineDTO.getPagamento().getImporto());
-        pagamento.setDataPagamento(LocalDateTime.now()); // <-- ORA CORRENTE
-        pagamento.setStato(ordineDTO.getPagamento().getStato());
-
-        pagamento.setOrdine(ordine);
-        ordine.setPagamento(pagamento);
+        ordine.setDataCreazione(LocalDateTime.now());
 
         Ordine ordineSalvato = ordineRepository.save(ordine);
-
         return todto(ordineSalvato);
     }
+
 
     @Override
     public void save(OrdineDTO ordineDTO) {

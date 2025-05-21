@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.controller;
 
+import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -20,8 +21,10 @@ import org.example.enterpriceappbackend.dto.RequestAuthentication;
 import org.example.enterpriceappbackend.dto.ResponseAuthentication;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -36,6 +39,8 @@ import java.util.List;
 public class UtenteController {
 
     private final UtenteService utenteservice;
+    private final AuthenticationManager authManager;
+    private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
     private final UtenteRepository utenteRepository;
 
@@ -168,6 +173,27 @@ public class UtenteController {
         }
     }
 
+    // corretto
+    @PostMapping("/refresh")
+    @ApiOperation(value = "Aggiorna il token di un utente")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "Token aggiornato con successo!"),
+            @ApiResponse(code = 400, message = "Dati non validi!"),
+            @ApiResponse(code = 401, message = "Token non valido o assente!"),
+            @ApiResponse(code = 500, message = "Errore interno del server!")
+    })
+    public ResponseEntity<ResponseAuthentication> refresh( @RequestParam("refreshtoken") String refreshToken) {
+        if (!jwtService.isTokenValid(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = jwtService.extractUsername(refreshToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        String newToken = jwtService.generateToken(userDetails);
+
+        return ResponseEntity.ok(new ResponseAuthentication(newToken, refreshToken));
+    }
+
 
     /*google*/
 
@@ -190,6 +216,7 @@ public class UtenteController {
         }
     }
 
+    // per far funzionare correttamente questa post serve l'implementazione di google e l'aggiunta della smtpgoogle.
     @ApiOperation(value = "recupera la password di un utente")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Password recuperata con successo!"),
@@ -200,7 +227,6 @@ public class UtenteController {
     public ResponseEntity<String> passwordDimenticata(@RequestParam @Email @NotBlank String email){
         String password=utenteservice.AggiornaLaPasswordTramiteEmail(email);
         try{
-
             return new ResponseEntity<>("EMAIL INVIATA CORRETTAMENTE "+ password, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println(password);

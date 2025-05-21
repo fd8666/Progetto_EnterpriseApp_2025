@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface PagamentoService {
 
+    PagamentoDTO createPagamento(Long ordineId, PagamentoDTO pagamentoDTO);
+
     List<PagamentoDTO> findByUtenteId(Long UtenteId);
 
     PagamentoDTO create(PagamentoDTO pagamentoDTO);

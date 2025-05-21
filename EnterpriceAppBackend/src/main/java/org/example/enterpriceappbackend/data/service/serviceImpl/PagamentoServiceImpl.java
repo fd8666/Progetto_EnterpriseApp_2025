@@ -1,6 +1,7 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.data.entity.Ordine;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,35 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
     private final OrdineRepository ordineRepository;
+
+    @Override
+    @Transactional
+    public PagamentoDTO createPagamento(Long ordineId, PagamentoDTO pagamentoDTO) {
+        Optional<Ordine> ordineOpt = ordineRepository.findById(ordineId);
+
+        if (ordineOpt.isEmpty()) {
+            throw new RuntimeException("Ordine non trovato con ID: " + ordineId);
+        }
+
+        Ordine ordine = ordineOpt.get();
+
+        Pagamento pagamento = new Pagamento();
+        pagamento.setNomeTitolare(pagamentoDTO.getNomeTitolare());
+        pagamento.setCognomeTitolare(pagamentoDTO.getCognomeTitolare());
+        pagamento.setNumeroCarta(pagamentoDTO.getNumeroCarta());
+        pagamento.setScadenza(pagamentoDTO.getScadenza());
+        pagamento.setCvv(pagamentoDTO.getCvv());
+        pagamento.setImporto(pagamentoDTO.getImporto());
+        pagamento.setDataPagamento(LocalDateTime.now());
+        pagamento.setStato(pagamentoDTO.getStato());
+
+        pagamento.setOrdine(ordine);
+        ordine.setPagamento(pagamento);
+
+        pagamento = pagamentoRepository.save(pagamento);
+
+        return todto(pagamento);
+    }
 
     @Override
     public PagamentoDTO create(PagamentoDTO pagamentoDTO) {

@@ -4,9 +4,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.data.service.PagamentoService;
 import org.example.enterpriceappbackend.dto.PagamentoDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,10 +39,12 @@ public class PagamentoController {
             @ApiResponse(code = 200, message = "Pagamento creato con successo"),
             @ApiResponse(code = 400, message = "Richiesta non valida")
     })
-    @PostMapping("/createPagamento") //funzionante
-    public ResponseEntity<PagamentoDTO> createPagamento(@RequestBody PagamentoDTO pagamentoDTO) {
-        PagamentoDTO creato = pagamentoService.create(pagamentoDTO);
-        return ResponseEntity.ok(creato);
+    @PostMapping("/createPagamento/{ordineId}")
+    public ResponseEntity<PagamentoDTO> createPagamento(
+            @RequestBody @Valid PagamentoDTO pagamentoDTO,
+            @PathVariable Long ordineId) {
+        PagamentoDTO pagamento = pagamentoService.createPagamento(ordineId,pagamentoDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(pagamento);
     }
 
     @ApiOperation(value = "Aggiorna un pagamento (solo admin)")

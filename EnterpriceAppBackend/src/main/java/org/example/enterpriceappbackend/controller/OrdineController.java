@@ -27,14 +27,14 @@ public class OrdineController {
             @ApiResponse(code = 400, message = "Dati non validi"),
             @ApiResponse(code = 500, message = "Errore interno del server")
     })
-    @PostMapping("/aggiungi")
+    @PostMapping("/aggiungi/{idProprietario}")
     public ResponseEntity<OrdineDTO> aggiungi(
             @RequestBody @Valid OrdineDTO ordinedto,
-            @RequestParam(required = true, name = "idproprietario") Long idproprietario) {
-
-        OrdineDTO aggiungi = ordineService.aggiungiOrdine(ordinedto, idproprietario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(aggiungi);
+            @PathVariable Long idProprietario) {
+        OrdineDTO ordine = ordineService.aggiungiOrdine(ordinedto, idProprietario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ordine);
     }
+
 
     @ApiOperation(value = "Aggiorna un ordine esistente")
     @ApiResponses(value = {

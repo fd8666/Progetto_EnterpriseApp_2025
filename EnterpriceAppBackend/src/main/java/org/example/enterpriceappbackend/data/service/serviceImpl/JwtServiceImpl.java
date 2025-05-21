@@ -29,7 +29,6 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.refresh.expiration}")
     private long refreshExpiration;
 
-    // ✅ Usa la chiave base64 decodificata dal file .properties
     private Key getSignKey() {
         byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
