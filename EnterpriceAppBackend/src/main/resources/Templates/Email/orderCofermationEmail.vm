@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Conferma Ordine</title>
+    <style>
+        body {
+            margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif; color: #333;
+        }
+        .email-container {
+            max-width: 700px; margin: 0 auto; background-color: #fff;
+            border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;
+        }
+        .section {
+            padding: 20px;
+        }
+        .divider {
+            height: 1px; background-color: #e5e7eb; margin: 25px 0;
+        }
+        .ticket-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .warning {
+            background-color: #fef9c3;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .footer {
+            background-color: #e2e8f0;
+            padding: 30px 20px;
+            font-size: 14px;
+            color: #333333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <h1>Il tuo Ordine &egrave; stato Confermato!</h1>
+    </div>
+    <div class="section">
+        <p>Car* <strong>$nomePropietario</strong>,</p>
+        <p>Grazie per aver scelto <strong>Eventra</strong> per il tuo recente acquisto. Siamo lieti di confermare che il tuo ordine &egrave; stato ricevuto con successo.</p>
+        <p>Di seguito troverai i dettagli del tuo acquisto:</p>
+        <div class="divider"></div>
+        <div class="ticket-box">
+            <p><strong>Importo totale:</strong> &euro; $totale</p>
+            <p><strong>Data di conferma:</strong> $dataConferma</p>
+        </div>
+        <div class="warning">
+            <strong>Ricorda:</strong><br />
+            I biglietti saranno inviati direttamente alle email inserite per ciascun spettatore.<br /><strong style="color:red;"> Assicurati che gli indirizzi email forniti siano corretti.</strong>
+
+            <br /><br /><strong>Nota:</strong><br />
+            Questo riepilogo &egrave; puramente informativo. Ti ricordiamo che i biglietti acquistati non sono rimborsabili, salvo diversa indicazione prevista dall&rsquo;organizzatore.<br /><strong style="color:red;"> Conserva questa email per eventuali riferimenti futuri</strong>.
+        </div>
+    </div>
+    <div class="footer">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="padding: 0 5px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="32" height="32" style="display: block;">
+                </td>
+                <td style="padding: 0 5px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="32" height="32" style="display: block;">
+                </td>
+                <td style="padding: 0 5px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" width="32" height="32" style="display: block;">
+                </td>
+            </tr>
+        </table>
+
+        <p><strong>Eventra | Customer Care</strong></p>
+        <p>Per favore non rispondere a questa email. Se hai bisogno di supporto, visita le nostre <a href="#" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">FAQ</a>.</p>
+        <p>&copy; 2025 Eventra. Tutti i diritti riservati.</p>
+    </div>
+</div>
+</body>
+</html>

@@ -15,8 +15,12 @@ import org.example.enterpriceappbackend.exceptions.NotFound;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
+
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -202,6 +206,44 @@ public class EventoServiceImpl implements EventoService {
         } else {
             log.info("Nessun evento scaduto trovato");
         }
+    }
+
+
+    @Override
+    public byte[] generaICS(Long eventoId) {
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        LocalDateTime inizio = evento.getDataOraEvento();
+        LocalDateTime fine = inizio.plusHours(3);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("BEGIN:VCALENDAR\n")
+                .append("VERSION:2.0\n")
+                .append("PRODID:-//Eventra//EventraApp//EN\n")
+                .append("METHOD:PUBLISH\n")
+                .append("BEGIN:VEVENT\n")
+                .append("UID:").append(UUID.randomUUID()).append("\n")
+                .append("DTSTAMP:").append(LocalDateTime.now().format(formatter)).append("\n")
+                .append("DTSTART:").append(inizio.format(formatter)).append("\n")
+                .append("DTEND:").append(fine.format(formatter)).append("\n")
+                .append("SUMMARY:").append(sanitize(evento.getNome())).append("\n")
+                .append("DESCRIPTION:").append(sanitize(evento.getDescrizione())).append("\n")
+                .append("LOCATION:").append(sanitize(evento.getStruttura().getNome())).append("\n")
+                .append("END:VEVENT\n")
+                .append("END:VCALENDAR");
+
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String sanitize(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\")
+                .replace(",", "\\,")
+                .replace(";", "\\;")
+                .replace("\n", "\\n");
     }
 
     private EventoDTO toDto(Evento evento) {

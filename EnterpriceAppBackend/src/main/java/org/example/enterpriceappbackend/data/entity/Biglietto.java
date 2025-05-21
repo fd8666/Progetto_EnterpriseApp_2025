@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -34,7 +35,7 @@ public class Biglietto {
     @Column(name = "cognome_spettatore", nullable = false)
     private String cognomeSpettatore;
 
-    @Column(name = "email_spettatore")
+    @Column(name = "email_spettatore", nullable = false)
     private String emailSpettatore;
 
     @Column(name = "deleted", nullable = false)
@@ -54,6 +55,7 @@ public class Biglietto {
     @ManyToOne
     @JoinColumn(name = "pagamento_id", referencedColumnName = "id")//opzionale in caso di pagamento non ancora effettuato
     @JsonIgnore
+    @JsonBackReference
     private Pagamento pagamento;
 
     @CreatedDate

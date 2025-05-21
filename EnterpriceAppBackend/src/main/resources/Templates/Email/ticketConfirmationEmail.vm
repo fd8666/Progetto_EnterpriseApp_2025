@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Conferma Evento</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        table {
+            border-spacing: 0;
+        }
+        img {
+            border: 0;
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+        .header {
+            background: #1e3a8a;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .section {
+            padding: 30px 20px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .footer {
+            background-color: #e2e8f0;
+            padding: 30px 20px;
+            font-size: 14px;
+            color: #333333;
+            text-align: center;
+        }
+        .social-icons a {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            margin: 0 8px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            line-height: 40px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+    </style>
+
+</head>
+<body>
+<center>
+    <table role="presentation" class="email-container">
+
+        <tr>
+            <td class="header">
+                <center>
+                <img src="cid:logo" alt="logo" width="50" height="50" ></center>
+                <h1 style="margin: 0; font-size: 24px;">$nome, ci sei anche tu!</h1>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="section">
+                <p>Grazie per il tuo ordine e per aver scelto il nostro servizio!</p>
+                <p><strong>Organizzazione Eventi Enterprise</strong></p>
+
+                <div class="divider"></div>
+
+                <p>Ti confermiamo i seguenti dettagli relativi al tuo ordine:</p>
+
+                <h2 style="font-size: 20px; background-color: #fbbf24; padding: 6px 12px; border-radius: 4px; display: inline-block;">$evento</h2>
+
+                <table role="presentation" width="100%" style="background-color: #f0f7ff; border-left: 4px solid #3b82f6; margin: 20px 0;">
+                    <tr>
+                        <td style="padding: 10px;">
+                            <img src="cid:pin" alt="pin" width="16" height="16" style="vertical-align: middle;">
+                            <h3>
+                            <strong>$luogo</strong><br></h3>
+                            <p>
+                                $indirizzo
+                            </p>
+                            <img src="cid:calendar" alt="calendar" width="16" height="16" style="vertical-align: middle;">
+                            <strong>$data</strong>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="divider"></div>
+
+                <h3>Dettagli Biglietto</h3>
+                <p><strong>1x$posto</strong><br>
+                    <strong>Nominativo: </strong> $nome $cognome<br>
+                    <strong>In Zona:</strong> $zona<br>
+                    <strong>Con:</strong> $features
+                </p>
+                <center>
+                <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=$evento&dates=$formattedStart/$formattedEnd&details=Ingresso+$posto+per+$nome+$cognome+luogo=$luogo+$indirizzo" class="button" target="_blank">
+                    + Aggiungi al Google Calendar +</a>
+
+                <a href="$baseUrl/api/evento/$eventoId/ics" download="evento.ics">
+                    <button style="padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">
+                        Esporta Evento (.ics)
+                    </button>
+                </a>
+                </center>
+
+            </td>
+        </tr>
+
+        <tr>
+            <td class="footer">
+                <!-- Sezione Social (senza link) -->
+                <table role="presentation" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="padding: 0 5px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="32" height="32" style="display: block;">
+                        </td>
+                        <td style="padding: 0 5px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="32" height="32" style="display: block;">
+                        </td>
+                        <td style="padding: 0 5px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" width="32" height="32" style="display: block;">
+                        </td>
+                    </tr>
+                </table>
+
+
+                <p style="margin-top: 20px;"><strong>Eventra | Customer Care</strong></p>
+                <p>Per favore non rispondere a questa email. Se hai dubbi o domande, visita le nostre <a href="#" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">FAQ</a>.</p>
+                <p>&copy; 2025 Eventra. Tutti i diritti riservati.</p>
+            </td>
+        </tr>
+    </table>
+</center>
+</body>
+</html>

@@ -22,4 +22,8 @@ public interface EventoService {
     List<EventoDTO> findByLuogoContainingIgnoreCase(String luogo);
     List<EventoDTO> findByDataOraAperturaCancelliBetween(LocalDateTime dataInizio, LocalDateTime dataFine);
     void checkEventiScaduti();
+
+
+
+    byte[] generaICS(Long eventoId);
 }

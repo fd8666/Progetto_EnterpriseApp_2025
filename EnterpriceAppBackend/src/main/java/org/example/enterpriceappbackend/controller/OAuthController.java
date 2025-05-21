@@ -1,6 +1,6 @@
 package org.example.enterpriceappbackend.controller;
 
-import io.swagger.annotations.*;
+
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.data.entity.Utente;
 import org.example.enterpriceappbackend.data.service.UtenteService;
@@ -14,21 +14,10 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@Api(value = "OAuth2 Login", description = "Endpoint per la gestione del login tramite Google", tags = {"OAuth2"})
 public class OAuthController {
 
     private final UtenteService utenteService;
 
-    @ApiOperation(
-            value = "Login con Google OAuth2",
-            notes = "Endpoint invocato automaticamente da Spring Security dopo un login Google OAuth2 andato a buon fine. "
-                    + "Restituisce un messaggio di benvenuto con il nome dell'utente autenticato e salva/aggiorna l'utente nel database."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Login completato con successo"),
-            @ApiResponse(code = 401, message = "Non autorizzato. Accesso negato o token non valido"),
-            @ApiResponse(code = 500, message = "Errore interno del server durante l'elaborazione del login")
-    })
     @GetMapping("/oauth/success")
     public ResponseEntity<UtenteDTO> getLoginInfo(OAuth2AuthenticationToken authentication) {
         Map<String, Object> attributes = authentication.getPrincipal().getAttributes();

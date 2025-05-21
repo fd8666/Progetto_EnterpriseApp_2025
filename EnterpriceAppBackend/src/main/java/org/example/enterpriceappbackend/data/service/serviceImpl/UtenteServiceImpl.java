@@ -4,7 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.enterpriceappbackend.data.constants.Messaggi;
+import org.example.enterpriceappbackend.CoreService.EmailService;
 import org.example.enterpriceappbackend.data.constants.Role;
 import org.example.enterpriceappbackend.data.entity.Utente;
 import org.example.enterpriceappbackend.data.repository.UtenteRepository;
@@ -32,9 +32,9 @@ public class UtenteServiceImpl implements UtenteService {
 
     private final UtenteRepository utenteRepository;
     private final PasswordEncoder passwordEncoder;
-    private final Messaggi messaggi;
     private final JavaMailSender mailSender;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
 
     @Override
@@ -57,6 +57,7 @@ public class UtenteServiceImpl implements UtenteService {
         nuovoUtente.setPassword(passwordEncoder.encode(utenteDTO.getPassword()));
         nuovoUtente.setRole(Role.USER);
 
+        emailService.sendRegistrazioneConferma(nuovoUtente);
         utenteRepository.save(nuovoUtente);
     }
     @Transactional
@@ -178,25 +179,11 @@ public class UtenteServiceImpl implements UtenteService {
                 utenteRepository.save(utente);
             }
 
-            String messaggio = messaggi.recuperoPassword(utente.getNome(), nuovaPassword);
-            sendEmail(email, "Recupero Password", messaggio);
-
             return nuovaPassword;
         }
 
         return null;
     }
-
-
-    public void sendEmail(String to, String soggetto, String testo){
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(to);
-        mailMessage.setSubject(soggetto);
-        mailMessage.setText(testo);
-        mailSender.send(mailMessage);
-    }
-
-    // ---------- MAPPER INTERNO ----------------//
 
     private UtenteDTO toDto(Utente utente){
         UtenteDTO dto = new UtenteDTO();

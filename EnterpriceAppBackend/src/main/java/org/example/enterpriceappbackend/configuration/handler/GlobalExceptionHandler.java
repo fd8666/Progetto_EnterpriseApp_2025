@@ -1,15 +1,14 @@
-package org.example.enterpriceappbackend.exceptions;
+package org.example.enterpriceappbackend.configuration.handler;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.data.crossstore.ChangeSetPersister;
+import org.example.enterpriceappbackend.exceptions.BadRequest;
+import org.example.enterpriceappbackend.exceptions.NotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.http.ResponseEntity;
 
 @ControllerAdvice

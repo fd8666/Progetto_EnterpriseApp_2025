@@ -1,5 +1,6 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
+import org.example.enterpriceappbackend.CoreService.EmailService;
 import org.example.enterpriceappbackend.data.entity.*;
 import org.example.enterpriceappbackend.data.repository.*;
 import org.example.enterpriceappbackend.dto.*;
@@ -19,15 +20,17 @@ public class BigliettoServiceImpl implements BigliettoService {
     private final EventoRepository eventoRepository;
     private final TipoPostoRepository tipoPostoRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final EmailService emailService;
 
     public BigliettoServiceImpl(BigliettoRepository bigliettoRepository,
                                 EventoRepository eventoRepository,
                                 TipoPostoRepository tipoPostoRepository,
-                                PagamentoRepository pagamentoRepository) {
+                                PagamentoRepository pagamentoRepository, EmailService emailService) {
         this.bigliettoRepository = bigliettoRepository;
         this.eventoRepository = eventoRepository;
         this.tipoPostoRepository = tipoPostoRepository;
         this.pagamentoRepository = pagamentoRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -76,6 +79,9 @@ public class BigliettoServiceImpl implements BigliettoService {
         biglietto.setDeleted(0);
 
         Biglietto savedBiglietto = bigliettoRepository.save(biglietto);
+
+        emailService.sendBigliettoConferma(savedBiglietto);
+
         return convertToInfoDTO(savedBiglietto);
     }
 
@@ -97,6 +103,8 @@ public class BigliettoServiceImpl implements BigliettoService {
         biglietto.setEmailSpettatore(bigliettoEditSpettatoreDTO.getEmailSpettatore());
 
         Biglietto updatedBiglietto = bigliettoRepository.save(biglietto);
+
+        emailService.sendModificaBigliettoConferma(updatedBiglietto);
         return convertToInfoDTO(updatedBiglietto);
     }
 

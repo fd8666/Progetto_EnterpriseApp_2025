@@ -1,9 +1,10 @@
 package org.example.enterpriceappbackend.data.service.serviceImpl;
 
 
-import jakarta.persistence.EntityNotFoundException;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.enterpriceappbackend.CoreService.EmailService;
 import org.example.enterpriceappbackend.data.entity.Ordine;
 import org.example.enterpriceappbackend.data.entity.Pagamento;
 import org.example.enterpriceappbackend.data.repository.OrdineRepository;
@@ -23,6 +24,7 @@ public class PagamentoServiceImpl implements PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
     private final OrdineRepository ordineRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -50,6 +52,8 @@ public class PagamentoServiceImpl implements PagamentoService {
 
         pagamento = pagamentoRepository.save(pagamento);
 
+        emailService.sendOrdineConferma(pagamento);
+
         return todto(pagamento);
     }
 
@@ -66,6 +70,7 @@ public class PagamentoServiceImpl implements PagamentoService {
         pagamento.setDataPagamento(LocalDateTime.now());
         pagamento = pagamentoRepository.save(pagamento);
 
+        emailService.sendOrdineConferma(pagamento);
         return todto(pagamento);
     }
 

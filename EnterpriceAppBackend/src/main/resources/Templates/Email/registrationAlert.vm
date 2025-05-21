@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Conferma Registrazione</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        table {
+            border-spacing: 0;
+        }
+        img {
+            border: 0;
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+        .header {
+            background: #1e3a8a;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .section {
+            padding: 30px 20px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+        }
+        .footer {
+            background-color: #e2e8f0;
+            padding: 30px 20px;
+            font-size: 14px;
+            color: #333333;
+            text-align: center;
+        }
+        .highlight-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .warning {
+            background-color: #fef9c3;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<center>
+    <table role="presentation" class="email-container">
+
+        <tr>
+            <td class="header">
+                <center>
+                    <img src="cid:logo" alt="logo" width="50" height="50">
+                </center>
+                <h1 style="margin: 0; font-size: 24px;">Benvenut* $nome!</h1>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="section">
+                <p>Grazie per esserti registrat* su <strong>Eventra</strong>!</p>
+                <p>Ora fai parte della nostra community di appassionati di musica, spettacoli, parchi ed eventi dal vivo. Che tu stia cercando il tuo prossimo concerto o voglia sorprendere qualcuno con un biglietto esclusivo, sei nel posto giusto.</p>
+
+                <div class="divider"></div>
+
+                <h3>I tuoi dati sono stati registrati con SUCCESSO</h3>
+                <p><strong>Nome:</strong> $nome $cognome<br>
+                    <strong>Email:</strong> $email</p>
+
+                <div class="divider"></div>
+
+                <h3>Come funziona Eventra</h3>
+                <div class="highlight-box">
+                    <ul style="padding-left: 20px; margin: 0;">
+                        <li><strong>Cerca</strong> l&rsquo;evento che ti interessa</li>
+                        <li><strong>Scegli</strong> tra concerti, spettacoli ed esperienze uniche</li>
+                        <li><strong>Inserisci</strong> i dati dello spettatore (pu&ograve; essere diverso da chi acquista)</li>
+                        <li><strong>Seleziona</strong> la fascia di prezzo e gli accessi esclusivi disponibili</li>
+                        <li><strong>Conferma e paga</strong> il tuo ordine in pochi clic</li>
+                    </ul>
+                </div>
+
+                <div class="warning">
+                    <strong>Attenzione:</strong> Se non completi il pagamento, non avrai alcuna priorit&agrave; nella prenotazione dei biglietti. <strong style="color: red;">Solo il pagamento garantisce la tua partecipazione!</strong>
+                </div>
+
+            </td>
+        </tr>
+
+        <tr>
+            <td class="footer">
+                <table role="presentation" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="padding: 0 5px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="32" height="32" style="display: block;">
+                        </td>
+                        <td style="padding: 0 5px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="32" height="32" style="display: block;">
+                        </td>
+                        <td style="padding: 0 5px;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" width="32" height="32" style="display: block;">
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="margin-top: 20px;"><strong>Eventra | Customer Care</strong></p>
+                <p>Per favore non rispondere a questa email. Se hai bisogno di supporto, visita le nostre <a href="#" style="color: #1e3a8a; text-decoration: none; font-weight: bold;">FAQ</a>.</p>
+                <p>&copy; 2025 Eventra. Tutti i diritti riservati.</p>
+            </td>
+        </tr>
+
+    </table>
+</center>
+</body>
+</html>

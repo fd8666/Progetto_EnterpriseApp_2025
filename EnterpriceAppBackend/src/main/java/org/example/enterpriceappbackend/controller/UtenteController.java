@@ -1,10 +1,5 @@
 package org.example.enterpriceappbackend.controller;
 
-import com.nimbusds.oauth2.sdk.token.RefreshToken;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -35,7 +30,6 @@ import java.util.List;
 @RequestMapping(path="/api/utente")
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
-@Api(value = "Utente API", description = "Operazioni relative alla gestione degli Utenti", tags = {"Utenti"})
 public class UtenteController {
 
     private final UtenteService utenteservice;
@@ -44,12 +38,7 @@ public class UtenteController {
     private final JwtService jwtService;
     private final UtenteRepository utenteRepository;
 
-    @ApiOperation(value = "Login utente")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Login effettuato con successo!"),
-            @ApiResponse(code = 401, message = "Credenziali non valide!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
-    })
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody RequestAuthentication authentication) {
         try {
@@ -81,12 +70,7 @@ public class UtenteController {
         }
     }
 
-    @ApiOperation(value = "Registrazione di un utente")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Registrazione avvenuta con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
-    })
+
     @PostMapping("/register")
     public ApiResponseConfiguration<ResponseAuthentication> register(@Valid @RequestBody UtenteDTO utenteDTO) {
         try {
@@ -112,24 +96,14 @@ public class UtenteController {
         }
     }
 
-    @ApiOperation(value = "dare i dati di tutti gli utenti")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "dati richiesti con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
-    })
+
     @GetMapping("/allUtenti")
     public ResponseEntity<List<Utente>>getAllUtenti() {
         List<Utente> utenti = utenteservice.getAllUtenti();
         return ResponseEntity.ok(utenti);
     }
 
-    @ApiOperation(value = "dare i dati di un utente")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "dati richiesti con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
-    })
+
     @GetMapping("/{id}")
     public ApiResponseConfiguration<UtenteDTO> getUserData(@PathVariable @Min(1) Long id) {
         UtenteDTO user = utenteservice.getById(id);
@@ -142,13 +116,6 @@ public class UtenteController {
 
     //ok
     @PostMapping("/aggiornaPassword")
-    @ApiOperation(value = "Aggiorna la password di un utente")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Password aggiornata con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 401, message = "Token non valido o assente!"),
-            @ApiResponse(code = 500, message = "Errore interno del server!")
-    })
     public ApiResponseConfiguration<String> aggiornaPassword(@Valid @RequestParam("nuovaPassword") String nuovaPassword, HttpServletRequest request) {
         try {
             String authHeader = request.getHeader("Authorization");
@@ -175,13 +142,6 @@ public class UtenteController {
 
     // corretto
     @PostMapping("/refresh")
-    @ApiOperation(value = "Aggiorna il token di un utente")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Token aggiornato con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 401, message = "Token non valido o assente!"),
-            @ApiResponse(code = 500, message = "Errore interno del server!")
-    })
     public ResponseEntity<ResponseAuthentication> refresh( @RequestParam("refreshtoken") String refreshToken) {
         if (!jwtService.isTokenValid(refreshToken)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -195,15 +155,7 @@ public class UtenteController {
     }
 
 
-    /*google*/
 
-    // ok
-    @ApiOperation(value = "Elimina un utente tramite il suo id")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Utente eliminato con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
-    })
     @DeleteMapping("/elimina/{id}")
     public ResponseEntity<?> eliminaUtente(@PathVariable Long id) {
         try {
@@ -216,21 +168,5 @@ public class UtenteController {
         }
     }
 
-    // per far funzionare correttamente questa post serve l'implementazione di google e l'aggiunta della smtpgoogle.
-    @ApiOperation(value = "recupera la password di un utente")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Password recuperata con successo!"),
-            @ApiResponse(code = 400, message = "Dati non validi!"),
-            @ApiResponse(code = 404, message = "Utente non trovato!")
-    })
-    @PostMapping("/passwordDimenticata")
-    public ResponseEntity<String> passwordDimenticata(@RequestParam @Email @NotBlank String email){
-        String password=utenteservice.AggiornaLaPasswordTramiteEmail(email);
-        try{
-            return new ResponseEntity<>("EMAIL INVIATA CORRETTAMENTE "+ password, HttpStatus.OK);
-        } catch (Exception e) {
-            System.out.println(password);
-            return new ResponseEntity<>("ERRORE DURANTE L'INVIO DELLA EMAIL ", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+
 }

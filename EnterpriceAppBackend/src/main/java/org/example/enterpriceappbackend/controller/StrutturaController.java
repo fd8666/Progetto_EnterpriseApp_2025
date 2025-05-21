@@ -1,9 +1,9 @@
 package org.example.enterpriceappbackend.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.enterpriceappbackend.data.entity.Struttura;
 import org.example.enterpriceappbackend.data.service.StrutturaService;
@@ -19,20 +19,19 @@ import java.util.List;
 @CrossOrigin(origins = "*",allowedHeaders = "*")
 @RequestMapping("/api/strutture")
 @RequiredArgsConstructor
-@Api(value = "Struttura API", description = "Operazioni relative alla gestione delle strutture", tags = {"Struttura"})
+@Tag(name = "Struttura", description = "Operazioni relative alla gestione delle strutture")
 public class StrutturaController {
 
     private final StrutturaService strutturaService;
 
-    @ApiOperation(
-            value = "Ottieni struttura per ID",
-            notes = "Recupera una struttura completa utilizzando l'ID specificato. "
-                    + "Restituisce l'entità `Struttura` completa, inclusi tutti i campi disponibili senza limitazioni tramite DTO.")
+    @Operation(
+            summary = "Ottieni struttura per ID",
+            description = "Recupera una struttura completa utilizzando l'ID specificato. Restituisce l'entità `Struttura` completa, inclusi tutti i campi disponibili senza limitazioni tramite DTO.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Struttura trovata"),
-            @ApiResponse(code = 404, message = "Struttura non trovata con l'ID specificato"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Struttura trovata"),
+            @ApiResponse(responseCode = "404", description = "Struttura non trovata con l'ID specificato"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/id/{id}")
     public ResponseEntity<Struttura> getById(@PathVariable Long id) {
@@ -41,16 +40,15 @@ public class StrutturaController {
     }
 
 
-    @ApiOperation(
-            value = "Ottieni strutture per nome",
-            notes = "Cerca strutture con nome contenente il testo specificato (match parziale). "
-                    + "Restituisce una lista di oggetti `Struttura` completi. Richiede almeno 3 caratteri per il parametro `nome`.")
+    @Operation(
+            summary = "Ottieni strutture per nome",
+            description = "Cerca strutture con nome contenente il testo specificato (match parziale). Richiede almeno 3 caratteri per il parametro `nome`.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Strutture trovate"),
-            @ApiResponse(code = 400, message = "Il nome da cercare deve contenere almeno 3 caratteri"),
-            @ApiResponse(code = 404, message = "Nessuna struttura trovata con il nome specificato"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Strutture trovate"),
+            @ApiResponse(responseCode = "400", description = "Il nome da cercare deve contenere almeno 3 caratteri"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura trovata con il nome specificato"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/nome/{nome}")
     public ResponseEntity<List<Struttura>> getByNome(@PathVariable String nome) {
@@ -59,16 +57,15 @@ public class StrutturaController {
     }
 
 
-    @ApiOperation(
-            value = "Ottieni strutture per indirizzo",
-            notes = "Cerca strutture in base all'indirizzo, utilizzando una ricerca parziale. "
-                    + "Restituisce una lista di oggetti `Struttura`. L'indirizzo deve contenere almeno 5 caratteri.")
+    @Operation(
+            summary = "Ottieni strutture per indirizzo",
+            description = "Cerca strutture in base all'indirizzo, utilizzando una ricerca parziale. L'indirizzo deve contenere almeno 5 caratteri.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Strutture trovate"),
-            @ApiResponse(code = 400, message = "L'indirizzo da cercare deve contenere almeno 5 caratteri"),
-            @ApiResponse(code = 404, message = "Nessuna struttura trovata all'indirizzo specificato"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Strutture trovate"),
+            @ApiResponse(responseCode = "400", description = "L'indirizzo da cercare deve contenere almeno 5 caratteri"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura trovata all'indirizzo specificato"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/indirizzo/{indirizzo}")
     public ResponseEntity<List<Struttura>> getByIndirizzo(@PathVariable String indirizzo) {
@@ -77,15 +74,14 @@ public class StrutturaController {
     }
 
 
-    @ApiOperation(
-            value = "Ottieni tutte le categorie",
-            notes = "Recupera tutte le categorie disponibili tra le strutture presenti nel sistema. "
-                    + "Restituisce una lista di stringhe (`List<String>`).")
+    @Operation(
+            summary = "Ottieni tutte le categorie",
+            description = "Recupera tutte le categorie disponibili tra le strutture presenti nel sistema.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Categorie trovate"),
-            @ApiResponse(code = 404, message = "Nessuna categoria trovata nel sistema"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Categorie trovate"),
+            @ApiResponse(responseCode = "404", description = "Nessuna categoria trovata nel sistema"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/categorie")
     public ResponseEntity<List<String>> getCategorie() {
@@ -95,15 +91,14 @@ public class StrutturaController {
 
 
     // /strutture/categoria/{categoria}
-    @ApiOperation(
-            value = "Ottieni strutture per categoria",
-            notes = "Restituisce una lista di strutture che appartengono alla categoria specificata. "
-                    + "La ricerca è esatta sul nome della categoria essendo selezionato da interfaccia e non inserito manualmente. Il risultato contiene entità `Struttura` complete.")
+    @Operation(
+            summary = "Ottieni strutture per categoria",
+            description = "Restituisce una lista di strutture che appartengono alla categoria specificata. La ricerca è esatta sul nome della categoria.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Strutture trovate"),
-            @ApiResponse(code = 404, message = "Nessuna struttura trovata per la categoria specificata"),//non possono esserci bad request
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Strutture trovate"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura trovata per la categoria specificata"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/categoria/{categoria}")
     public ResponseEntity<List<Struttura>> getByCategoria(@PathVariable String categoria) {
@@ -113,14 +108,14 @@ public class StrutturaController {
 
 
     // /strutture/vategoria/{categoria}/count
-    @ApiOperation(
-            value = "Conteggio strutture per categoria",
-            notes = "Restituisce il numero totale di strutture appartenenti a una categoria specificata.")
+    @Operation(
+            summary = "Conteggio strutture per categoria",
+            description = "Restituisce il numero totale di strutture appartenenti a una categoria specificata.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Conteggio riuscito"),
-            @ApiResponse(code = 404, message = "Nessuna struttura trovata per la categoria specificata"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Conteggio riuscito"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura trovata per la categoria specificata"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/categoria/{categoria}/count")
     public ResponseEntity<Long> countByCategoria(@PathVariable String categoria) {
@@ -130,15 +125,14 @@ public class StrutturaController {
 
 
     // /strutture/{id}/utente
-    @ApiOperation(
-            value = "Ottieni informazioni per l'utente",
-            notes = "Restituisce un oggetto `StrutturaInfoUtenteDTO`, contenente un sottoinsieme di dati pubblicabili a utenti generici (clienti). "
-                    + "Include ad esempio nome, categoria, indirizzo, e coordinate approssimative.")
+    @Operation(
+            summary = "Ottieni informazioni per l'utente",
+            description = "Restituisce un oggetto `StrutturaInfoUtenteDTO` contenente dati pubblicabili a utenti generici come nome, categoria, indirizzo e coordinate approssimative.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Informazioni utente trovate"),
-            @ApiResponse(code = 404, message = "Struttura non trovata con l'ID specificato"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Informazioni utente trovate"),
+            @ApiResponse(responseCode = "404", description = "Struttura non trovata con l'ID specificato"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/{id}/infoUtente")
     public ResponseEntity<StrutturaInfoUtenteDTO> getInfoUtente(@PathVariable Long id) {
@@ -148,15 +142,14 @@ public class StrutturaController {
 
 
     // /strutture/{id}/map
-    @ApiOperation(
-            value = "Ottieni informazioni mappa",
-            notes = "Restituisce un oggetto `StrutturaMapInfoDTO`, contenente coordinate geografiche (latitudine e longitudine) della struttura. "
-                    + "Utile per generare pin su mappe nel frontend.")
+    @Operation(
+            summary = "Ottieni informazioni mappa",
+            description = "Restituisce un oggetto `StrutturaMapInfoDTO` con coordinate geografiche della struttura, utile per mappe frontend.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Informazioni mappa trovate"),
-            @ApiResponse(code = 404, message = "Impossibile recuperare le coordinate per la struttura"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Informazioni mappa trovate"),
+            @ApiResponse(responseCode = "404", description = "Impossibile recuperare le coordinate per la struttura"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/{id}/map")
     public ResponseEntity<StrutturaMapInfoDTO> getMap(@PathVariable Long id) {
@@ -166,14 +159,14 @@ public class StrutturaController {
 
 
     // /strutture/{id}/organizzatore
-    @ApiOperation(
-            value = "Ottieni informazioni per l'organizzatore",
-            notes = "Restituisce un oggetto `StrutturaInfoOrganizzatoreDTO` contenente dati 'estesi' di un astruttura per utente organizzatore ")
+    @Operation(
+            summary = "Ottieni informazioni per l'organizzatore",
+            description = "Restituisce un oggetto `StrutturaInfoOrganizzatoreDTO` contenente dati estesi di una struttura per utente organizzatore.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Informazioni organizzatore trovate"),
-            @ApiResponse(code = 404, message = "Struttura non trovata con l'ID specificato"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Informazioni organizzatore trovate"),
+            @ApiResponse(responseCode = "404", description = "Struttura non trovata con l'ID specificato"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/{id}/infoOrganizzatore")
     public ResponseEntity<StrutturaInfoOrganizzatoreDTO> getOrganizzatoreById(@PathVariable Long id) {
@@ -183,15 +176,14 @@ public class StrutturaController {
 
 
     // /strutture/listaOrganizzatore
-    @ApiOperation(
-            value = "Ottieni tutte le strutture per l'organizzatore",
-            notes = "Restituisce una lista di `StrutturaInfoOrganizzatoreDTO` per tutte le strutture convenzionate. "
-                    + "I dati restituiti sono pensati per essere mostrati in un'interfaccia che mostri una lista da cui scegliere.")
+    @Operation(
+            summary = "Ottieni tutte le strutture per l'organizzatore",
+            description = "Restituisce una lista di `StrutturaInfoOrganizzatoreDTO` per tutte le strutture convenzionate.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Lista delle strutture restituita con successo"),
-            @ApiResponse(code = 401, message = "Non autorizzato"),
-            @ApiResponse(code = 404, message = "Nessuna struttura disponibile"),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Lista delle strutture restituita con successo"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura disponibile"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/listaOrganizzatore")
     public ResponseEntity<List<StrutturaInfoOrganizzatoreDTO>> listaOrganizzatore() {
@@ -201,15 +193,14 @@ public class StrutturaController {
 
 
     // GET /strutture/evento/{eventoId}
-    @ApiOperation(
-            value = "Ottieni struttura tramite ID evento",
-            notes = "Recupera una struttura a partire dall'ID di un evento che si svolge al suo interno. "
-                    + "Restituisce un `StrutturaInfoUtenteDTO` con le informazioni pubblicabili della struttura.")
+    @Operation(
+            summary = "Ottieni struttura tramite ID evento",
+            description = "Recupera una struttura a partire dall'ID di un evento. Restituisce un `StrutturaInfoUtenteDTO` con informazioni pubblicabili.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Struttura trovata e restituita correttamente"),
-            @ApiResponse(code = 401, message = "Non autorizzato"),
-            @ApiResponse(code = 404, message = "Nessuna struttura trovata per l'evento specificato"),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Struttura trovata e restituita correttamente"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura trovata per l'evento specificato"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @GetMapping("/evento/{eventoId}")
     public ResponseEntity<StrutturaInfoUtenteDTO> getByEvento(@PathVariable Long eventoId) {
@@ -219,16 +210,15 @@ public class StrutturaController {
 
 
     // POST /strutture/filtra-organizzatore
-    @ApiOperation(
-            value = "Filtra strutture per organizzatore",
-            notes = "Permette di filtrare le strutture utilizzando parametri opzionali: nome (min 3 caratteri), categoria (da scegliere) e indirizzo (min 5 caratteri). "
-                    + "Restituisce una lista di `StrutturaInfoOrganizzatoreDTO` in base ai criteri indicati.")
+    @Operation(
+            summary = "Filtra strutture per organizzatore",
+            description = "Permette di filtrare le strutture utilizzando parametri opzionali: nome (min 3 caratteri), categoria e indirizzo (min 5 caratteri).")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Strutture filtrate con successo"),
-            @ApiResponse(code = 400, message = "Bad Request: uno dei parametri non soddisfa le condizioni minime (nome o indirizzo troppo corti)"),
-            @ApiResponse(code = 404, message = "Nessuna struttura trovata con i criteri forniti"),
-            @ApiResponse(code = 401, message = "Non autorizzato. L'utente non ha i permessi necessari."),
-            @ApiResponse(code = 500, message = "Errore interno del server")
+            @ApiResponse(responseCode = "200", description = "Strutture filtrate con successo"),
+            @ApiResponse(responseCode = "400", description = "Bad Request: uno dei parametri non soddisfa le condizioni minime"),
+            @ApiResponse(responseCode = "404", description = "Nessuna struttura trovata con i criteri forniti"),
+            @ApiResponse(responseCode = "401", description = "Non autorizzato. L'utente non ha i permessi necessari."),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
     })
     @PostMapping("/filtra-organizzatore")
     public ResponseEntity<List<StrutturaInfoOrganizzatoreDTO>> filtraOrganizzatore(
