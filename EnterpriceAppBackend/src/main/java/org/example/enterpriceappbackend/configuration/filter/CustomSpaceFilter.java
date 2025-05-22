@@ -1,4 +1,4 @@
-package org.example.enterpriceappbackend.filter;
+package org.example.enterpriceappbackend.configuration.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

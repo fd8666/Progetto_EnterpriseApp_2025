@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Properties;
 
+//Gestisce la compilazione delle risorse dinamiche dei template delle mail
+
 @Configuration
 public class VelocityEngineConfig {
     @Bean

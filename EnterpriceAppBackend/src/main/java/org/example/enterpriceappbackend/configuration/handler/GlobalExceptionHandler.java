@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    //mi serve per la gestione di un limite minimo di caratteri nella ricerca delle strutture da parte dell'organizzatore ecc
+    //Serve per la gestione di un limite minimo di caratteri nella ricerca delle strutture da parte dell'organizzatore ecc
     @ExceptionHandler(BadRequest.class)
    // Restituisce un errore 400 con messaggio personalizzato in base all'api con eccezione gestito nel service
     public ResponseEntity<String> handleBadRequest(BadRequest badRequest) {

@@ -1,7 +1,7 @@
-package org.example.enterpriceappbackend.configuration.security;
+package org.example.enterpriceappbackend.configuration.security.filter;
 
 import lombok.RequiredArgsConstructor;
-import org.example.enterpriceappbackend.data.service.AuthService;
+import org.example.enterpriceappbackend.CoreService.AuthService;
 import org.example.enterpriceappbackend.data.service.UtenteService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -21,6 +21,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private final AuthService authService;
     private final UtenteService utenteService;
 
+
+    //Serve per Caricare l'utente della richiesta OAuth fatta (Supporta Google e Git)
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);

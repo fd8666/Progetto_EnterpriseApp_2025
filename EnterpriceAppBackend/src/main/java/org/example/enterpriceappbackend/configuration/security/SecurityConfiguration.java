@@ -1,9 +1,7 @@
-
 package org.example.enterpriceappbackend.configuration.security;
 
-
 import lombok.RequiredArgsConstructor;
-
+import org.example.enterpriceappbackend.configuration.security.filter.CustomOAuth2UserService;
 import org.example.enterpriceappbackend.data.repository.UtenteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -33,8 +31,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
-    @Autowired
-    @Lazy
+    @Autowired @Lazy
     private JwtAuthFilter jwtAuthFilter;
 
     @Autowired
@@ -56,7 +53,6 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/utente/allUtenti").hasRole("ADMIN")
                         .requestMatchers("/api/utente/elimina/**").hasRole("ADMIN")
                         .requestMatchers("/api/evento/create").hasRole("ADMIN")
-                        .requestMatchers("/api/tipi-posto/create").hasRole("ADMIN")
                         .requestMatchers("/api/evento/organizzatore/{organizzatoreId}").hasRole("ADMIN")
                         .requestMatchers("/api/evento/update/{id}").hasRole("ADMIN")
                         .requestMatchers("/api/evento/delete/{id}").hasRole("ADMIN")
@@ -67,6 +63,13 @@ public class SecurityConfiguration {
                         .requestMatchers("/organizzatore/{organizzatoreId}").hasRole("ADMIN")
                         .requestMatchers("/api/zone/**").hasRole("ADMIN")
                         .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/api/utente/login",
                                 "/api/utente/register",
                                 "/api/utente/passwordDimenticata",
@@ -76,26 +79,20 @@ public class SecurityConfiguration {
                                 "/api/ordine/aggiungi"
                         ).permitAll()
                         .requestMatchers("/api/**").hasRole("USER")
-                        .requestMatchers("api/strutture/{id}/map").hasRole("USER")
-                        .requestMatchers("api/strutture/evento/{eventoId}").hasRole("USER")
-                        .requestMatchers("api/strutture/evento/{id}/utente").hasRole("USER")
+                        .requestMatchers("/api/strutture/{id}/map").hasRole("USER")
+                        .requestMatchers("/api/strutture/evento/{eventoId}").hasRole("USER")
+                        .requestMatchers("/api/strutture/evento/{id}/utente").hasRole("USER")
                         .anyRequest().denyAll()
                 )
-                // Permettiamo sessione se richiesta (per gestire OAuth2), seno blocca la richiesta
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/oauth/success", true)
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserServi)
-                        )
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserServi))
                 )
                 .build();
     }
-
 
     @Bean
     public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
@@ -112,7 +109,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration Configuration) throws Exception {
-        return Configuration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }

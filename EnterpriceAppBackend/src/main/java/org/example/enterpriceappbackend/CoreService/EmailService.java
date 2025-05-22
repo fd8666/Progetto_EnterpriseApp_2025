@@ -5,7 +5,6 @@ import jakarta.mail.internet.MimeMessage;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.example.enterpriceappbackend.data.entity.Biglietto;
-import org.example.enterpriceappbackend.data.entity.Ordine;
 import org.example.enterpriceappbackend.data.entity.Pagamento;
 import org.example.enterpriceappbackend.data.entity.Utente;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+
+
+//Ottiene le informazioni e le sostituisce alle risorse dinamiche ($)
 @Service
 public class EmailService {
 

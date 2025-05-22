@@ -1,9 +1,8 @@
-package org.example.enterpriceappbackend.data.service.serviceImpl;
+package org.example.enterpriceappbackend.CoreService;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.enterpriceappbackend.data.constants.Role;
 import org.example.enterpriceappbackend.data.entity.Utente;
-import org.example.enterpriceappbackend.data.service.AuthService;
 import org.example.enterpriceappbackend.data.service.UtenteService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

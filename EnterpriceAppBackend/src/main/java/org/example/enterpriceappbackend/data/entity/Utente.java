@@ -1,10 +1,7 @@
 package org.example.enterpriceappbackend.data.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import net.minidev.json.annotate.JsonIgnore;
 import org.example.enterpriceappbackend.data.constants.Role;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,7 +17,6 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "Utente")
-
 public class Utente implements UserDetails {
 
     @Id

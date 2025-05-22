@@ -1,20 +1,23 @@
 package org.example.enterpriceappbackend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import org.example.enterpriceappbackend.configuration.*;
 import lombok.RequiredArgsConstructor;
+import org.example.enterpriceappbackend.configuration.ApiResponseConfiguration;
 import org.example.enterpriceappbackend.data.entity.Utente;
 import org.example.enterpriceappbackend.data.repository.UtenteRepository;
-import org.example.enterpriceappbackend.data.service.JwtService;
+import org.example.enterpriceappbackend.CoreService.JwtService;
 import org.example.enterpriceappbackend.data.service.UtenteService;
-import org.example.enterpriceappbackend.dto.UtenteDTO;
 import org.example.enterpriceappbackend.dto.RequestAuthentication;
 import org.example.enterpriceappbackend.dto.ResponseAuthentication;
+import org.example.enterpriceappbackend.dto.UtenteDTO;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,14 +25,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
 @RequiredArgsConstructor
-@RequestMapping(path="/api/utente")
+@RequestMapping(path = "/api/utente")
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
+@Tag(name = "Utente", description = "API per la gestione degli utenti e autenticazione")
 public class UtenteController {
 
     private final UtenteService utenteservice;
@@ -38,7 +41,16 @@ public class UtenteController {
     private final JwtService jwtService;
     private final UtenteRepository utenteRepository;
 
+    @Operation(
+            summary = "Login utente",
+            description = "Effettua il login con email e password, restituisce JWT e refresh token.")
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login effettuato con successo"),
+            @ApiResponse(responseCode = "401", description = "Credenziali non valide"),
+            @ApiResponse(responseCode = "404", description = "Utente non trovato"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody RequestAuthentication authentication) {
         try {
@@ -51,10 +63,9 @@ public class UtenteController {
             );
 
             String jwt = jwtService.generateToken(userDetails);
-            System.out.println(jwt);
             String refreshToken = jwtService.generateRefreshToken(userDetails);
 
-            ResponseAuthentication response = new ResponseAuthentication(jwt, refreshToken);
+            ResponseAuthentication response = new ResponseAuthentication(jwt, refreshToken,utente.getId());
 
             return ResponseEntity.ok(new ApiResponseConfiguration<>(true, "Login effettuato con successo!", response));
 
@@ -70,7 +81,15 @@ public class UtenteController {
         }
     }
 
+    @Operation(
+            summary = "Registrazione utente",
+            description = "Registra un nuovo utente e restituisce JWT e refresh token.")
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Registrazione avvenuta con successo"),
+            @ApiResponse(responseCode = "400", description = "Email già in uso o dati non validi"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
+    })
     @PostMapping("/register")
     public ApiResponseConfiguration<ResponseAuthentication> register(@Valid @RequestBody UtenteDTO utenteDTO) {
         try {
@@ -85,7 +104,7 @@ public class UtenteController {
             String token = jwtService.generateToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
-            ResponseAuthentication responseAuthentication = new ResponseAuthentication(token, refreshToken);
+            ResponseAuthentication responseAuthentication = new ResponseAuthentication(token, refreshToken,utenteDTO.getId());
 
             return new ApiResponseConfiguration<>(true, "Registrazione avvenuta con successo", responseAuthentication);
 
@@ -96,25 +115,45 @@ public class UtenteController {
         }
     }
 
+    @Operation(
+            summary = "Recupera tutti gli utenti",
+            description = "Restituisce la lista completa degli utenti registrati.")
 
+    @ApiResponse(responseCode = "200", description = "Lista utenti restituita con successo")
     @GetMapping("/allUtenti")
-    public ResponseEntity<List<Utente>>getAllUtenti() {
+    public ResponseEntity<List<Utente>> getAllUtenti() {
         List<Utente> utenti = utenteservice.getAllUtenti();
         return ResponseEntity.ok(utenti);
     }
 
+    @Operation(
+            summary = "Recupera dati utente per ID",
+            description = "Restituisce i dati dell'utente dato il suo ID.")
 
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Dati utente recuperati con successo"),
+            @ApiResponse(responseCode = "404", description = "Utente non valido o assente")
+    })
     @GetMapping("/{id}")
     public ApiResponseConfiguration<UtenteDTO> getUserData(@PathVariable @Min(1) Long id) {
         UtenteDTO user = utenteservice.getById(id);
-        if (user!=null) {
+        if (user != null) {
             return new ApiResponseConfiguration<>(true, "Dati utente recuperati con successo", user);
         } else {
             return new ApiResponseConfiguration<>(false, "Utente non valido o assente", null);
         }
     }
 
-    //ok
+    @Operation(
+            summary = "Aggiorna password utente",
+            description = "Aggiorna la password dell'utente autenticato usando il token JWT.")
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password aggiornata con successo"),
+            @ApiResponse(responseCode = "400", description = "Token assente o malformato"),
+            @ApiResponse(responseCode = "401", description = "Token non valido o scaduto"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
+    })
     @PostMapping("/aggiornaPassword")
     public ApiResponseConfiguration<String> aggiornaPassword(@Valid @RequestParam("nuovaPassword") String nuovaPassword, HttpServletRequest request) {
         try {
@@ -140,9 +179,16 @@ public class UtenteController {
         }
     }
 
-    // corretto
+    @Operation(
+            summary = "Aggiorna token JWT con refresh token",
+            description = "Restituisce un nuovo JWT valido utilizzando un refresh token valido.")
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Token aggiornato con successo"),
+            @ApiResponse(responseCode = "403", description = "Refresh token non valido o scaduto")
+    })
     @PostMapping("/refresh")
-    public ResponseEntity<ResponseAuthentication> refresh( @RequestParam("refreshtoken") String refreshToken) {
+    public ResponseEntity<ResponseAuthentication> refresh(@RequestParam("refreshtoken") String refreshToken) {
         if (!jwtService.isTokenValid(refreshToken)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -151,11 +197,18 @@ public class UtenteController {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         String newToken = jwtService.generateToken(userDetails);
 
-        return ResponseEntity.ok(new ResponseAuthentication(newToken, refreshToken));
+        return ResponseEntity.ok(new ResponseAuthentication(newToken, refreshToken,(long)1));
     }
 
+    @Operation(
+            summary = "Elimina un utente per ID",
+            description = "Elimina un utente dato il suo ID. Ritorna messaggi appropriati se utente non trovato o errore.")
 
-
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Utente eliminato con successo"),
+            @ApiResponse(responseCode = "404", description = "Utente non trovato"),
+            @ApiResponse(responseCode = "500", description = "Errore interno del server")
+    })
     @DeleteMapping("/elimina/{id}")
     public ResponseEntity<?> eliminaUtente(@PathVariable Long id) {
         try {
@@ -167,6 +220,4 @@ public class UtenteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore durante l'eliminazione dell'utente.");
         }
     }
-
-
 }

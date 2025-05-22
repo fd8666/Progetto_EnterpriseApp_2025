@@ -1,4 +1,4 @@
-package org.example.enterpriceappbackend.data.service;
+package org.example.enterpriceappbackend.CoreService;
 
 import io.jsonwebtoken.*;
 import org.springframework.security.core.userdetails.UserDetails;
