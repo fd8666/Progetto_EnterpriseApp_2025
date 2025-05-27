@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Eventra</string>
+    <string name="server">http://10.0.2.2:8080</string>  <!-- Cambiato da localhost -->
+    <string name="http_error">Errore di connessione al server</string>
+    <string name="network_error">Errore di rete. Verifica la connessione internet.</string>
+    <string name="end_of_stream_error">Errore nella lettura dei dati</string>
+    <string name="unexpected_error">Errore imprevisto. Riprova più tardi.</string>
 </resources>
