@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
     private val _application = application
     private val gson: Gson = GsonBuilder()
         .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        .setLenient()
         .create()
     private val server = application.getString(R.string.server)
     private val backendUrl = URL("$server/api/evento")
@@ -43,8 +47,6 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _error = MutableStateFlow<ErrorData?>(null)
     val error: StateFlow<ErrorData?> = _error.asStateFlow()
-
-
 
     // Funzioni per ottenere eventi
     fun getAllEventi() = getEventi("", _eventi, "allEventi")
@@ -74,26 +76,39 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
                     return@launch
                 }
 
-                val responseJson = response.body?.string() ?: ""
-                Log.d("EventiViewModel", "Response evento detail: $responseJson")
+                val responseBody = response.body?.string() ?: ""
+                Log.d("EventiViewModel", "Response evento detail: $responseBody")
 
-                val eventoData: EventoData = gson.fromJson(responseJson, EventoData::class.java)
+                if (responseBody.isBlank()) {
+                    _error.value = ErrorData(0, "Risposta vuota dal server")
+                    return@launch
+                }
 
+                // Controlla se è HTML (pagina di login)
+                if (responseBody.trimStart().startsWith("<!DOCTYPE html>") ||
+                    responseBody.trimStart().startsWith("<html")) {
+                    _error.value = ErrorData(401, "Autenticazione richiesta")
+                    Log.e("EventiViewModel", "Server returned HTML login page")
+                    return@launch
+                }
 
+                try {
+                    val eventoData: EventoData = gson.fromJson(responseBody, EventoData::class.java)
+                    _eventoDetail.value = eventoData
+                } catch (e: JsonSyntaxException) {
+                    Log.e("EventiViewModel", "Errore nel parsing del dettaglio evento: ${e.message}")
+                    _error.value = ErrorData(0, "Errore nel formato dei dati: ${e.message}")
+                }
 
-                _eventoDetail.value = eventoData
             } catch (e: IOException) {
                 _error.value = ErrorData(0, _application.getString(R.string.network_error))
                 Log.e("EventiViewModel", "Network error: ${e.message}")
-
             } catch (e: EOFException) {
                 _error.value = ErrorData(0, _application.getString(R.string.end_of_stream_error))
                 Log.e("EventiViewModel", "End of stream error: ${e.message}")
-
             } catch (e: Exception) {
                 _error.value = ErrorData(0, _application.getString(R.string.unexpected_error))
                 Log.e("EventiViewModel", "Unexpected error: ${e.message}")
-
             } finally {
                 _isLoading.value = false
             }
@@ -111,6 +126,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
             _isLoading.value = true
 
             val urlString = "$backendUrl$urlSuffix"
+            Log.d("EventiViewModel", "Fetching eventi from: $urlString")
 
             val client = OkHttpClient()
             val request = Request.Builder()
@@ -124,34 +140,77 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
                 if (!response.isSuccessful) {
                     _error.value = ErrorData(response.code, _application.getString(R.string.http_error))
                     Log.e("EventiViewModel", "HTTP error: ${response.code} for category: $category")
-
                     return@launch
                 }
 
-                val responseJson = response.body?.string() ?: ""
-                Log.d("EventiViewModel", "Response $category: $responseJson")
+                val responseBody = response.body?.string() ?: ""
+                Log.d("EventiViewModel", "Raw Response Body for $category: ${responseBody.take(200)}...")
 
-                val eventiList: List<EventoData> = gson.fromJson(responseJson, Array<EventoData>::class.java).toList()
+                if (responseBody.isBlank()) {
+                    Log.d("EventiViewModel", "Risposta vuota per $category")
+                    targetFlow.value = emptyList()
+                    return@launch
+                }
 
+                // Controlla se è HTML (pagina di login)
+                if (responseBody.trimStart().startsWith("<!DOCTYPE html>") ||
+                    responseBody.trimStart().startsWith("<html")) {
+                    _error.value = ErrorData(401, "Autenticazione richiesta - Il server richiede login OAuth2")
+                    Log.e("EventiViewModel", "Server returned HTML login page for $category")
+                    targetFlow.value = emptyList()
+                    return@launch
+                }
 
-                targetFlow.value = eventiList
+                try {
+                    // Verifica se la risposta è una stringa semplice (messaggio di errore)
+                    if (responseBody.startsWith("\"") && responseBody.endsWith("\"")) {
+                        val errorMessage = responseBody.replace("\"", "")
+                        Log.e("EventiViewModel", "Server returned error message: $errorMessage")
+                        _error.value = ErrorData(0, errorMessage)
+                        targetFlow.value = emptyList()
+                        return@launch
+                    }
+
+                    // Verifica se è un JSON valido
+                    val jsonElement = JsonParser.parseString(responseBody)
+
+                    val eventiList = if (jsonElement.isJsonArray) {
+                        val listType = object : TypeToken<List<EventoData>>() {}.type
+                        gson.fromJson<List<EventoData>>(responseBody, listType)
+                    } else if (jsonElement.isJsonObject) {
+                        val singleEvento = gson.fromJson(responseBody, EventoData::class.java)
+                        listOf(singleEvento)
+                    } else {
+                        Log.e("EventiViewModel", "Formato di risposta non valido per $category")
+                        _error.value = ErrorData(0, "Formato di risposta non valido")
+                        emptyList()
+                    }
+
+                    Log.d("EventiViewModel", "Parsed ${eventiList.size} eventi for $category")
+                    targetFlow.value = eventiList
+
+                } catch (e: JsonSyntaxException) {
+                    Log.e("EventiViewModel", "Errore nel parsing del JSON per $category: ${e.message}")
+                    _error.value = ErrorData(0, "Errore di autenticazione o formato dati non valido")
+                    targetFlow.value = emptyList()
+                } catch (e: IllegalStateException) {
+                    Log.e("EventiViewModel", "Stato illegale nel parsing per $category: ${e.message}")
+                    _error.value = ErrorData(0, "Errore di autenticazione - Login richiesto")
+                    targetFlow.value = emptyList()
+                }
+
             } catch (e: IOException) {
                 _error.value = ErrorData(0, _application.getString(R.string.network_error))
-                Log.e("EventiViewModel", "Network error: ${e.message}")
-
+                Log.e("EventiViewModel", "Network error for $category: ${e.message}")
             } catch (e: EOFException) {
                 _error.value = ErrorData(0, _application.getString(R.string.end_of_stream_error))
-                Log.e("EventiViewModel", "End of stream error: ${e.message}")
-
+                Log.e("EventiViewModel", "End of stream error for $category: ${e.message}")
             } catch (e: Exception) {
                 _error.value = ErrorData(0, _application.getString(R.string.unexpected_error))
-                Log.e("EventiViewModel", "Unexpected error: ${e.message}")
-
+                Log.e("EventiViewModel", "Unexpected error for $category: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
-
-
 }
