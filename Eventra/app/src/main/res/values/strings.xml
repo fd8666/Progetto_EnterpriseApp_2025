@@ -5,7 +5,7 @@
     <string name="network_error">Errore di rete. Verifica la connessione internet.</string>
     <string name="end_of_stream_error">Errore nella lettura dei dati</string>
     <string name="unexpected_error">Errore imprevisto. Riprova più tardi.</string>
-
+    <string name="web_client_id">IL_TUO_GOOGLE_CLIENT_ID</string>
     <!-- Nav -->
     <string name="nav_home">Home</string>
     <string name="nav_search">Cerca</string>
