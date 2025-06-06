@@ -38,6 +38,8 @@ import com.example.eventra.viewmodels.TagCategoriaViewModel
 import com.example.eventra.viewmodels.data.EventoData
 import com.example.eventra.viewmodels.data.TagCategoriaData
 import kotlinx.coroutines.delay
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalAnimationApi::class)
@@ -585,7 +587,7 @@ fun getCategoriaColori(categoriaId: Long): Color {
         Color(0xFF00FFAA),
         Color(0xFFFFC800),
     )
-    return colors[(categoriaId % colors.size).toInt()]
+    return colors[((categoriaId - 1) % colors.size).toInt()]
 }
 
 //mappa le categorie del database
@@ -597,3 +599,13 @@ fun getCategorieIcone(categoryName: String): ImageVector {
         else -> Icons.Default.Category
     }
 }
+fun formatDate(dateString: String): String {
+    return try {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+        val date = LocalDateTime.parse(dateString, formatter)
+        date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+    } catch (e: Exception) {
+        dateString
+    }
+}
+

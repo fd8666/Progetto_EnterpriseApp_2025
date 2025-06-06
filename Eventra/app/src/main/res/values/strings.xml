@@ -5,4 +5,90 @@
     <string name="network_error">Errore di rete. Verifica la connessione internet.</string>
     <string name="end_of_stream_error">Errore nella lettura dei dati</string>
     <string name="unexpected_error">Errore imprevisto. Riprova più tardi.</string>
+
+    <!-- Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Cerca</string>
+
+    <!-- Home -->
+    <string name="home_title">EVENTRA</string>
+    <string name="home_no_events_category">Nessun evento per questa categoria</string>
+    <string name="home_no_events_available">Nessun evento disponibile</string>
+
+    <!-- Search -->
+    <string name="search_title">Cerca Eventi</string>
+    <string name="search_hint">Cerca per nome evento</string>
+    <string name="search_location_hint">Cerca per luogo</string>
+    <string name="search_filters">Filtri</string>
+    <string name="search_category">Categoria</string>
+    <string name="search_date_range">Intervallo Date</string>
+    <string name="search_start_date">Data Inizio</string>
+    <string name="search_end_date">Data Fine</string>
+    <string name="search_clear_filters">Cancella Filtri</string>
+    <string name="search_apply_filters">Applica Filtri</string>
+    <string name="search_no_results">Nessun evento trovato</string>
+    <string name="search_all_categories">Tutte le categorie</string>
+    <string name="search_select_date">Seleziona data</string>
+    <string name="search_searching">Ricerca in corso…</string>
+    <string name="search_results_for">Risultati per:</string>
+    <string name="search_placeholder_title">Inizia la tua ricerca!</string>
+    <string name="search_placeholder_subtitle">Usa la barra di ricerca o i filtri per trovare l\'evento perfetto per te</string>
+
+    <!-- General -->
+    <string name="loading">Caricamento…</string>
+    <string name="error">Errore</string>
+    <string name="retry">Riprova</string>
+    <string name="cancel">Annulla</string>
+    <string name="confirm">Conferma</string>
+    <string name="close">Chiudi</string>
+    <string name="save">Salva</string>
+    <string name="delete">Elimina</string>
+    <string name="edit">Modifica</string>
+    <string name="add">Aggiungi</string>
+
+    <!-- Dettagli ev -->
+    <string name="available_seats">posti disponibili</string>
+    <string name="available_seats_count">%d posti</string>
+    <string name="event_date">Data evento</string>
+    <string name="event_time">Orario</string>
+    <string name="event_location">Luogo</string>
+    <string name="event_description">Descrizione</string>
+    <string name="event_category">Categoria</string>
+    <string name="event_organizer">Organizzatore</string>
+    <string name="total_events">Eventi totali: %d</string>
+    <string name="events_found">%d eventi trovati</string>
+
+    <!-- Date & Time Format -->
+    <string name="date_format">dd/MM/yyyy</string>
+    <string name="datetime_format">dd/MM/yyyy HH:mm</string>
+    <string name="time_format">HH:mm</string>
+
+    <!-- Categories (SOLO QUESTE 3) -->
+    <string name="category_concerti">Concerti</string>
+    <string name="category_sport">Sport</string>
+    <string name="category_intrattenimento">Intrattenimento</string>
+
+    <string name="message_no_internet">Nessuna connessione internet</string>
+    <string name="message_server_error">Errore del server. Riprova più tardi.</string>
+    <string name="message_loading_events">Caricamento eventi…</string>
+    <string name="message_loading_categories">Caricamento categorie…</string>
+    <string name="message_search_empty">Inserisci almeno un criterio di ricerca</string>
+    <string name="message_date_invalid">Data non valida</string>
+    <string name="message_end_date_before_start">La data di fine deve essere successiva alla data di inizio</string>
+
+    <string name="content_description_event_image">Immagine evento</string>
+    <string name="content_description_favorite">Aggiungi ai preferiti</string>
+    <string name="content_description_search">Cerca</string>
+    <string name="content_description_filter">Filtri</string>
+    <string name="content_description_clear">Cancella</string>
+    <string name="content_description_calendar">Calendario</string>
+    <string name="content_description_location">Posizione</string>
+    <string name="content_description_category">Categoria</string>
+
+
+    <string name="error_network_timeout">Timeout di rete</string>
+    <string name="error_no_data">Nessun dato disponibile</string>
+    <string name="error_parsing">Errore nel parsing dei dati</string>
+    <string name="error_unknown">Errore sconosciuto</string>
+
 </resources>
