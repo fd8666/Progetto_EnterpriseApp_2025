@@ -59,11 +59,27 @@ dependencies {
     // ViewModel per Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
-
+    // SharedPreferences & Security
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     // Navigation per Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation ("androidx.compose.material3:material3-window-size-class:1.1.2")
+    implementation ("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.compose.ui:ui:1.5.8")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.5.8")
+    implementation("androidx.compose.material3:material3:1.1.2")
+    implementation("androidx.navigation:navigation-compose:2.7.6")
 
+    // Networking
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Google Sign In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")

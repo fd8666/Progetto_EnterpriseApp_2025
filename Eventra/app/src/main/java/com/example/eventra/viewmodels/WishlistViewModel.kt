@@ -60,6 +60,7 @@ class WishlistViewModel(application: Application) : AndroidViewModel(application
     private val _error = MutableStateFlow<ErrorData?>(null)
     val error: StateFlow<ErrorData?> = _error.asStateFlow()
 
+
     fun removeEventoFromWishlist(wishlistId: Long, eventoId: Long, onSuccess: () -> Unit = {}) {
         CoroutineScope(Dispatchers.IO).launch {
             _error.value = null
@@ -129,6 +130,67 @@ class WishlistViewModel(application: Application) : AndroidViewModel(application
 
     fun getWishlistsByUtenteAndVisibilita(utenteId: Long, visibilita: Visibilita) =
         getWishlists("/utente/$utenteId/visibilita/${visibilita.name}", _wishlistsByVisibilita, "byUtenteAndVisibilita")
+
+    fun addEventoToWishlist(wishlistId: Long, eventoId: Long, onSuccess: () -> Unit = {}) {
+        CoroutineScope(Dispatchers.IO).launch {
+            _error.value = null
+
+            val urlString = "$backendUrl/$wishlistId/evento/$eventoId"
+            Log.d("WishlistViewModel", "Adding evento $eventoId to wishlist $wishlistId: $urlString")
+
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url(urlString)
+                .post("".toRequestBody()) // POST vuoto
+                .build()
+
+            try {
+                val response = client.newCall(request).execute()
+
+                if (!response.isSuccessful) {
+                    _error.value = ErrorData(response.code, _application.getString(R.string.http_error))
+                    Log.e("WishlistViewModel", "HTTP error adding evento: ${response.code}")
+                    return@launch
+                }
+
+                Log.d("WishlistViewModel", "Evento aggiunto con successo alla wishlist")
+
+                // Aggiorna le wishlist dopo l'aggiunta
+                _wishlistsByVisibilita.value?.let { currentWishlists ->
+                    val updatedWishlists = currentWishlists.map { wishlist ->
+                        if (wishlist.id == wishlistId) {
+                            wishlist.copy(eventi = wishlist.eventi + eventoId)
+                        } else {
+                            wishlist
+                        }
+                    }
+                    _wishlistsByVisibilita.value = updatedWishlists
+                }
+
+                onSuccess()
+            } catch (e: IOException) {
+                _error.value = ErrorData(0, _application.getString(R.string.network_error))
+                Log.e("WishlistViewModel", "Network error adding evento: ${e.message}")
+            } catch (e: Exception) {
+                _error.value = ErrorData(0, _application.getString(R.string.unexpected_error))
+                Log.e("WishlistViewModel", "Unexpected error adding evento: ${e.message}")
+            }
+        }
+    }
+
+    // Metodo per verificare se un evento è nella wishlist
+    fun isEventoInWishlist(eventoId: Long): Boolean {
+        return _wishlistsByVisibilita.value?.any { wishlist ->
+            wishlist.eventi.contains(eventoId)
+        } ?: false
+    }
+
+    // Metodo per ottenere l'ID della prima wishlist privata
+    fun getFirstPrivateWishlistId(): Long? {
+        return _wishlistsByVisibilita.value?.firstOrNull { wishlist ->
+            wishlist.visibilita == Visibilita.PRIVATA
+        }?.id
+    }
 
     fun getWishlistCondiviseConUtente(utenteId: Long) {
         CoroutineScope(Dispatchers.IO).launch {

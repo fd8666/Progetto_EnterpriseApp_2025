@@ -8,10 +8,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -26,8 +28,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -41,9 +41,6 @@ import com.example.eventra.viewmodels.WishlistViewModel
 import com.example.eventra.viewmodels.data.EventoData
 import com.example.eventra.viewmodels.data.WishlistData
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalAnimationApi::class)
@@ -59,656 +56,302 @@ fun WishlistScreen() {
         EventiViewModel(context.applicationContext as android.app.Application)
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val condivisioneState by wishlistViewModel.condivisioneState.collectAsState()
-    var selectedVisibilita by remember { mutableStateOf(Visibilita.PRIVATA) }
-
-    // Stati
-    val wishlists by wishlistViewModel.wishlists.collectAsState()
     val wishlistsByVisibilita by wishlistViewModel.wishlistsByVisibilita.collectAsState()
     val wishlistCondivise by wishlistViewModel.wishlistCondivise.collectAsState()
     val eventi by eventiViewModel.eventi.collectAsState()
-    val isLoadingWishlists by wishlistViewModel.isLoading.collectAsState()
-    val isLoadingEventi by eventiViewModel.isLoading.collectAsState()
-    val errorWishlists by wishlistViewModel.error.collectAsState()
+    val isLoading by wishlistViewModel.isLoading.collectAsState()
 
-    // Gestione stato condivisione
-    LaunchedEffect(condivisioneState) {
-        when (condivisioneState) {
-            is WishlistViewModel.CondivisioneState.Success -> {
-                snackbarHostState.showSnackbar(
-                    message = (condivisioneState as WishlistViewModel.CondivisioneState.Success).message,
-                    duration = SnackbarDuration.Short
-                )
-                wishlistViewModel.resetCondivisioneState()
-            }
-            is WishlistViewModel.CondivisioneState.Error -> {
-                snackbarHostState.showSnackbar(
-                    message = (condivisioneState as WishlistViewModel.CondivisioneState.Error).message,
-                    duration = SnackbarDuration.Long
-                )
-                wishlistViewModel.resetCondivisioneState()
-            }
-            else -> { /* Nessuna azione */ }
-        }
-    }
+    var selectedTab by remember { mutableStateOf(0) }
 
-    // Wishlist da visualizzare basate sulla visibilità selezionata
-    val wishlistsToDisplay = remember(wishlistsByVisibilita, wishlistCondivise, selectedVisibilita) {
-        when (selectedVisibilita) {
-            Visibilita.CONDIVISA -> wishlistCondivise ?: emptyList()
-            else -> wishlistsByVisibilita ?: emptyList()
-        }
-    }
-
-    // Caricamento iniziale eventi
+    // Carica i dati
     LaunchedEffect(Unit) {
+        wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
+        wishlistViewModel.getWishlistCondiviseConUtente(2)
         eventiViewModel.getAllEventi()
     }
 
-    // Caricamento wishlist quando cambiano eventi o visibilità
-    LaunchedEffect(eventi, selectedVisibilita) {
-        if (!eventi.isNullOrEmpty()) {
-            when (selectedVisibilita) {
-                Visibilita.PRIVATA -> {
-                    wishlistViewModel.getWishlistsByUtenteAndVisibilita(1, Visibilita.PRIVATA)
-                }
-                Visibilita.CONDIVISA -> {
-                    wishlistViewModel.getWishlistCondiviseConUtente(1)
-                }
-                else -> {
-                    wishlistViewModel.getWishlistsByUtenteAndVisibilita(1, selectedVisibilita)
-                }
-            }
-        }
+    // Calcola gli eventi delle wishlist private
+    val eventiWishlistPrivate = remember(wishlistsByVisibilita, eventi) {
+        val eventiIds = wishlistsByVisibilita?.flatMap { it.eventi }?.toSet() ?: emptySet()
+        eventi?.filter { eventiIds.contains(it.id) } ?: emptyList()
     }
 
-    // Funzione per ricaricare le wishlist correnti
-    fun reloadCurrentWishlists() {
-        if (!eventi.isNullOrEmpty()) {
-            when (selectedVisibilita) {
-                Visibilita.PRIVATA -> {
-                    wishlistViewModel.getWishlistsByUtenteAndVisibilita(1, Visibilita.PRIVATA)
-                }
-                Visibilita.CONDIVISA -> {
-                    wishlistViewModel.getWishlistCondiviseConUtente(1)
-                }
-                else -> {
-                    wishlistViewModel.getWishlistsByUtenteAndVisibilita(1, selectedVisibilita)
-                }
-            }
-        }
-    }
-
-    // ID della prima wishlist privata (per la condivisione)
-    val firstPrivateWishlistId = remember(wishlistsToDisplay, selectedVisibilita) {
-        if (selectedVisibilita == Visibilita.PRIVATA && wishlistsToDisplay.isNotEmpty()) {
-            wishlistsToDisplay.first().id
-        } else null
+    // Calcola gli eventi delle wishlist condivise
+    val eventiWishlistCondivise = remember(wishlistCondivise, eventi) {
+        val eventiIds = wishlistCondivise?.flatMap { it.eventi }?.toSet() ?: emptySet()
+        eventi?.filter { eventiIds.contains(it.id) } ?: emptyList()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1A0A38),
-                        Color(0xFF24095A),
-                        Color(0xFF0B1D5D),
-                        Color(0xFF000B3C)
-                    )
-                )
-            )
+            .background(EventraColors.BackgroundGray)
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
+            // Header Wishlist
             item {
-                Spacer(modifier = Modifier.height(40.dp))
+                WishlistHeader()
             }
 
-            // Titolo principale
+            // Tab Selector
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp, horizontal = 24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "LA MIA WISHLIST",
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        textAlign = TextAlign.Center,
-                        letterSpacing = 2.sp,
-                        style = androidx.compose.ui.text.TextStyle(
-                            color = Color(0xFFFFFFFF).copy(alpha = 0.5f),
-                            shadow = androidx.compose.ui.graphics.Shadow(
-                                color = Color(0xFFFFFFFF).copy(alpha = 0.5f),
-                                offset = androidx.compose.ui.geometry.Offset(0f, 4f),
-                                blurRadius = 8f
-                            )
-                        ),
-                    )
-                }
-            }
-
-            // Selezione visibilità con pulsante condivisione integrato
-            item {
-                SelezioneVisibilita(
-                    selectedVisibilita = selectedVisibilita,
-                    onVisibilitaSelected = { visibilita ->
-                        selectedVisibilita = visibilita
-                    },
-                    onCondividiWishlist = if (firstPrivateWishlistId != null) {
-                        { wishlistId, email ->
-                            wishlistViewModel.condividiWishlistConEmail(wishlistId, email)
-                        }
-                    } else null,
-                    wishlistId = firstPrivateWishlistId
+                WishlistTabSelector(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    privateCount = eventiWishlistPrivate.size,
+                    sharedCount = eventiWishlistCondivise.size
                 )
             }
 
-            // Gestione errori
-            item {
-                if (errorWishlists != null) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.Red.copy(alpha = 0.1f)
+            // Content based on selected tab
+            when (selectedTab) {
+                0 -> {
+
+                    if (eventiWishlistPrivate.isNotEmpty()) {
+                        item {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(((eventiWishlistPrivate.size / 2 + eventiWishlistPrivate.size % 2) * 300).dp)
+                                    .padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                userScrollEnabled = false
+                            ) {
+                                items(eventiWishlistPrivate) { evento ->
+                                    WishlistEventCard(
+                                        evento = evento,
+                                        wishlistViewModel = wishlistViewModel,
+                                        isInWishlistContext = true,
+                                        onClick = { /* dettagli evento */ }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        item {
+                            WishlistEmptyState(
+                                title = "Nessun evento salvato",
+                                subtitle = "Inizia ad aggiungere eventi alle tue wishlist!",
+                                icon = Icons.Default.FavoriteBorder
+                            )
+                        }
+                    }
+                }
+
+                1 -> {
+                    // Wishlist Condivise
+                    item {
+                        WishlistSectionHeader(
+                            title = "Wishlist Condivise",
+                            subtitle = "${eventiWishlistCondivise.size} eventi condivisi"
                         )
-                    ) {
-                        Text(
-                            text = "Errore: ${errorWishlists?.message}",
-                            fontSize = 14.sp,
-                            color = Color.Red,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                    }
+
+                    if (eventiWishlistCondivise.isNotEmpty()) {
+                        item {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(((eventiWishlistCondivise.size / 2 + eventiWishlistCondivise.size % 2) * 300).dp)
+                                    .padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                userScrollEnabled = false
+                            ) {
+                                items(eventiWishlistCondivise) { evento ->
+                                    WishlistEventCard(
+                                        evento = evento,
+                                        wishlistViewModel = wishlistViewModel,
+                                        isInWishlistContext = true,
+                                        onClick = { /* dettagli evento */ }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        item {
+                            WishlistEmptyState(
+                                title = "Nessuna wishlist condivisa",
+                                subtitle = "Non hai ancora ricevuto wishlist condivise da altri utenti.",
+                                icon = Icons.Default.Share
+                            )
+                        }
                     }
                 }
             }
 
-            // Sezione eventi nelle wishlist
-            wishlistsToDisplay.forEach { wishlist ->
-                val eventiInWishlist = eventi?.filter { evento ->
-                    wishlist.eventi.contains(evento.id)
-                } ?: emptyList()
-
-                item {
-                    WishlistSection(
-                        wishlist = wishlist,
-                        eventiInWishlist = eventiInWishlist,
-                        isCondivisa = selectedVisibilita == Visibilita.CONDIVISA,
-                        onRemoveEvento = { eventoId ->
-                            wishlistViewModel.removeEventoFromWishlist(
-                                wishlistId = wishlist.id,
-                                eventoId = eventoId
-                            ) {
-                                reloadCurrentWishlists()
-                            }
-                        },
-                        onCondividiWishlist = { wishlistId, email ->
-                            wishlistViewModel.condividiWishlistConEmail(wishlistId, email)
-                        }
-                    )
-                }
-            }
-
-            // Messaggio quando non ci sono wishlist
             item {
-                if (wishlistsToDisplay.isEmpty() && !isLoadingWishlists) {
-                    WishlistVuota(
-                        message = when (selectedVisibilita) {
-                            Visibilita.CONDIVISA -> "Nessuna wishlist condivisa con te"
-                            else -> "Nessuna wishlist ${visibilitaToString(selectedVisibilita).lowercase()}"
-                        }
-                    )
-                }
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }
 
-        // Snackbar per messaggi di feedback
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
-        ) { snackbarData ->
-            Snackbar(
-                snackbarData = snackbarData,
-                containerColor = when {
-                    snackbarData.visuals.message.contains("successo", ignoreCase = true) ->
-                        Color.Green.copy(alpha = 0.9f)
-                    snackbarData.visuals.message.contains("errore", ignoreCase = true) ->
-                        Color.Red.copy(alpha = 0.9f)
-                    else -> MaterialTheme.colorScheme.inverseSurface
-                },
-                contentColor = Color.White
-            )
-        }
-
-        // Indicatore di caricamento
-        if (isLoadingWishlists || isLoadingEventi) {
+        // Loading indicator
+        if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
+                LoadingIndicator()
             }
         }
     }
 }
 
 @Composable
-fun SelezioneVisibilita(
-    selectedVisibilita: Visibilita,
-    onVisibilitaSelected: (Visibilita) -> Unit,
-    onCondividiWishlist: ((Long, String) -> Unit)? = null,
-    wishlistId: Long? = null,
-    showCondividiButton: Boolean = false
-) {
-    var showCondivisioneDialog by remember { mutableStateOf(false) }
+fun WishlistHeader() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        EventraColors.PrimaryOrange,
+                        EventraColors.DarkOrange
+                    )
+                )
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.Favorite,
+                contentDescription = "Wishlist",
+                modifier = Modifier.size(64.dp),
+                tint = Color.White
+            )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Le Tue Wishlist",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "I tuoi eventi preferiti in un posto",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color.White.copy(alpha = 0.9f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun WishlistTabSelector(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    privateCount: Int,
+    sharedCount: Int
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Bottone PRIVATA
-        Button(
-            onClick = { onVisibilitaSelected(Visibilita.PRIVATA) },
-            modifier = Modifier
-                .weight(1f)
-                .height(44.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedVisibilita == Visibilita.PRIVATA)
-                    Color(0xFFF44336) else Color(0xFF1A0A38).copy(alpha = 0.8f)
-            )
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "Privata",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "PRIVATA",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-        }
+        WishlistTabItem(
+            title = "Eventi",
+            count = privateCount,
+            isSelected = selectedTab == 0,
+            onClick = { onTabSelected(0) },
+            modifier = Modifier.weight(1f)
+        )
 
-        // Bottone CONDIVISA CON ME
-        Button(
-            onClick = { onVisibilitaSelected(Visibilita.CONDIVISA) },
-            modifier = Modifier
-                .weight(1.5f)
-                .height(44.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedVisibilita == Visibilita.CONDIVISA)
-                    Color(0xFF2196F3) else Color(0xFF2196F3).copy(alpha = 0.8f)
-            )
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Condivisa con me",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "CONDIVISA CON ME",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-        // Pulsante di condivisione - SEMPRE VISIBILE se onCondividiWishlist non è null
-        if (onCondividiWishlist != null) { // CAMBIATO: rimuovi la condizione showCondividiButton
-            IconButton(
-                onClick = { showCondivisioneDialog = true },
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        color = Color(0xFF4CAF50).copy(alpha = 0.9f),
-                        shape = RoundedCornerShape(20.dp)
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Condividi wishlist",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-
-    // Dialog per condivisione email
-    if (onCondividiWishlist != null) {
-        DialogCondivisioneEmail(
-            showDialog = showCondivisioneDialog,
-            onDismiss = { showCondivisioneDialog = false },
-            onCondividi = { email ->
-                onCondividiWishlist(wishlistId ?: 1L, email)
-                showCondivisioneDialog = false
-            }
+        WishlistTabItem(
+            title = "Condivise",
+            count = sharedCount,
+            isSelected = selectedTab == 1,
+            onClick = { onTabSelected(1) },
+            modifier = Modifier.weight(1f)
         )
     }
 }
 
-
-
 @Composable
-fun WishlistSection(
-    wishlist: WishlistData,
-    eventiInWishlist: List<EventoData>,
-    isCondivisa: Boolean = false,
-    onRemoveEvento: (Long) -> Unit,
-    onCondividiWishlist: ((Long, String) -> Unit)? = null
+fun WishlistTabItem(
+    title: String,
+    count: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.02f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .scale(scale)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1A0A38).copy(alpha = 0.3f)
+            containerColor = if (isSelected)
+                EventraColors.PrimaryOrange
+            else
+                EventraColors.CardWhite
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 8.dp else 2.dp
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header della wishlist - RIMOSSO IL PULSANTE DI CONDIVISIONE
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = getVisibilitaIcona(wishlist.visibilita),
-                        contentDescription = visibilitaToString(wishlist.visibilita),
-                        tint = getVisibilitaColore(wishlist.visibilita),
-                        modifier = Modifier.size(20.dp)
-                    )
+            Text(
+                text = count.toString(),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isSelected) Color.White else EventraColors.PrimaryOrange
+            )
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = if (isCondivisa) {
-                            "CONDIVISA CON TE"
-                        } else {
-                            visibilitaToString(wishlist.visibilita)
-                        },
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-            }
-
-            // Resto del codice rimane uguale...
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (isCondivisa) {
-                Text(
-                    text = "${eventiInWishlist.size} eventi condivisi",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Grid di eventi - resto uguale
-            if (eventiInWishlist.isNotEmpty()) {
-                eventiInWishlist.chunked(2).forEach { rowEvents ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        rowEvents.forEach { evento ->
-                            WishlistEventCard(
-                                evento = evento,
-                                onRemoveFromWishlist = {
-                                    if (!isCondivisa) {
-                                        onRemoveEvento(evento.id)
-                                    }
-                                },
-                                onBuyTickets = { /* Implementa acquisto biglietti */ },
-                                isCondivisa = isCondivisa,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        if (rowEvents.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (isCondivisa) {
-                            "Nessun evento in questa wishlist condivisa"
-                        } else {
-                            "Nessun evento in questa wishlist"
-                        },
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 16.sp
-                    )
-                }
-            }
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isSelected) Color.White else EventraColors.TextDark
+            )
         }
     }
 }
 
-
 @Composable
-fun DialogCondivisioneEmail(
-    showDialog: Boolean,
-    onDismiss: () -> Unit,
-    onCondividi: (String) -> Unit,
-    isLoading: Boolean = false
-) {
-    var email by remember { mutableStateOf("") }
-    var isEmailValid by remember { mutableStateOf(true) }
-
-    // Funzione per validare l'email
-    fun isValidEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
-
-    // Reset email quando il dialog si chiude
-    LaunchedEffect(showDialog) {
-        if (!showDialog) {
-            email = ""
-            isEmailValid = true
-        }
-    }
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                if (!isLoading) onDismiss()
-            },
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        tint = Color(0xFF4CAF50),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Condividi Wishlist",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Inserisci l'email dell'utente con cui vuoi condividere la tua wishlist:",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            isEmailValid = true
-                        },
-                        label = { Text("Email destinatario") },
-                        placeholder = { Text("esempio@email.com") },
-                        singleLine = true,
-                        isError = !isEmailValid,
-                        supportingText = {
-                            if (!isEmailValid) {
-                                Text(
-                                    text = "Inserisci un indirizzo email valido",
-                                    color = Color.Red,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.AlternateEmail,
-                                contentDescription = "Email",
-                                tint = if (isEmailValid) Color.Gray else Color.Red
-                            )
-                        },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                val trimmedEmail = email.trim()
-                                if (trimmedEmail.isNotBlank() && isValidEmail(trimmedEmail)) {
-                                    onCondividi(trimmedEmail)
-                                } else {
-                                    isEmailValid = false
-                                }
-                            }
-                        )
-                    )
-
-                    if (isLoading) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = Color(0xFF4CAF50)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Condivisione in corso...",
-                                fontSize = 14.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val trimmedEmail = email.trim()
-                        if (trimmedEmail.isNotBlank() && isValidEmail(trimmedEmail)) {
-                            onCondividi(trimmedEmail)
-                        } else {
-                            isEmailValid = false
-                        }
-                    },
-                    enabled = !isLoading && email.trim().isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Condividendo...")
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Send,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Condividi")
-                        }
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = onDismiss,
-                    enabled = !isLoading
-                ) {
-                    Text(
-                        text = "Annulla",
-                        color = Color.Gray
-                    )
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(16.dp)
+fun WishlistSectionHeader(title: String, subtitle: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        Text(
+            text = title,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = EventraColors.TextDark
+        )
+        Text(
+            text = subtitle,
+            fontSize = 14.sp,
+            color = EventraColors.TextGray
         )
     }
 }
@@ -716,11 +359,35 @@ fun DialogCondivisioneEmail(
 @Composable
 fun WishlistEventCard(
     evento: EventoData,
-    onRemoveFromWishlist: () -> Unit,
-    onBuyTickets: () -> Unit,
-    isCondivisa: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    wishlistViewModel: WishlistViewModel,
+    isInWishlistContext: Boolean = false,
+    onClick: () -> Unit
 ) {
+    var isPressed by remember { mutableStateOf(false) }
+
+    // Se siamo nel contesto wishlist, l'evento è sempre considerato nella wishlist
+    val isInWishlist = if (isInWishlistContext) {
+        true
+    } else {
+        val wishlistsByVisibilita by wishlistViewModel.wishlistsByVisibilita.collectAsState()
+        remember(wishlistsByVisibilita, evento.id) {
+            wishlistsByVisibilita?.any { wishlist ->
+                wishlist.eventi.contains(evento.id)
+            } ?: false
+        }
+    }
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
+
+    val heartScale by animateFloatAsState(
+        targetValue = if (isInWishlist) 1.2f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
+
     val baseUrl = "http://10.0.2.2:8080/images/"
     val imageUrl = remember(evento.immagine) {
         if (!evento.immagine.isNullOrBlank()) {
@@ -731,181 +398,239 @@ fun WishlistEventCard(
 
     Card(
         modifier = modifier
-            .height(180.dp)
-            .clickable { onBuyTickets() },
+            .fillMaxWidth()
+            .height(280.dp)
+            .scale(scale)
+            .clickable {
+                isPressed = true
+                onClick()
+            },
         shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box {
-            // Immagine di sfondo
-            if (!imageUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = evento.nome,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFF1A0A38),
-                                    Color(0xFF24095A)
-                                )
-                            )
-                        )
-                )
-            }
-
-            // Overlay scuro per migliorare la leggibilità del testo
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.7f)
-                            )
-                        )
+                    .fillMaxWidth()
+                    .height(180.dp)
+            ) {
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = evento.nome,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                        contentScale = ContentScale.Crop
                     )
-            )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                EventraColors.DividerGray,
+                                RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Event,
+                            contentDescription = null,
+                            tint = EventraColors.TextGray,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
 
-            // Icona cuore per preferiti (solo per wishlist proprie)
-            if (!isCondivisa) {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = "Rimuovi dalla wishlist",
-                    tint = Color.Red,
+                // Cuore per gestire la wishlist
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(24.dp)
+                        .padding(10.dp)
+                        .size(36.dp)
+                        .background(
+                            Color.White.copy(alpha = 0.9f),
+                            shape = CircleShape
+                        )
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
                         ) {
-                            onRemoveFromWishlist()
-                        }
-                )
-            } else {
-                // Indicatore che è condivisa
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Evento condiviso",
-                    tint = Color(0xFF2196F3),
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(20.dp)
-                )
+                            val wishlistId = wishlistViewModel.getFirstPrivateWishlistId()
+                            if (wishlistId != null) {
+                                if (isInWishlist) {
+                                    // Rimuovi dalla wishlist
+                                    wishlistViewModel.removeEventoFromWishlist(wishlistId, evento.id) {
+                                        // Ricarica le wishlist dopo la rimozione
+                                        if (isInWishlistContext) {
+                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
+                                            wishlistViewModel.getWishlistCondiviseConUtente(2)
+                                        } else {
+                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
+                                        }
+                                    }
+                                } else {
+                                    // Aggiungi alla wishlist (solo se non siamo nel contesto wishlist)
+                                    if (!isInWishlistContext) {
+                                        wishlistViewModel.addEventoToWishlist(wishlistId, evento.id) {
+                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isInWishlist) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isInWishlist) "Rimuovi dalla wishlist" else "Aggiungi alla wishlist",
+                        tint = if (isInWishlist) EventraColors.PrimaryOrange else EventraColors.TextGray,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .scale(heartScale)
+                    )
+                }
             }
 
-            // Testo e pulsante in basso
+            // Resto del contenuto della card
             Column(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .padding(12.dp)
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Nome evento
-                Text(
-                    text = evento.nome ?: "Evento",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Button(
-
-                    onClick = onBuyTickets,
-                    modifier = Modifier
-                        .height(32.dp)
-                        .widthIn(min = 100.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3) // BLU
-                    ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                ) {
+                Column {
                     Text(
-                        text = "Acquista",
-                        color = Color.White,
-                        fontSize = 12.sp,
+                        text = evento.nome ?: "Evento",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EventraColors.TextDark,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 18.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = EventraColors.TextGray,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = evento.luogo,
+                            fontSize = 11.sp,
+                            color = EventraColors.TextGray,
+                            modifier = Modifier.padding(start = 3.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = EventraColors.TextGray,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = evento.dataOraEvento,
+                            fontSize = 11.sp,
+                            color = EventraColors.TextGray,
+                            modifier = Modifier.padding(start = 3.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Column {
+                    Text(
+                        text = "${evento.postiDisponibili} posti",
+                        fontSize = 13.sp,
+                        color = EventraColors.PrimaryOrange,
                         fontWeight = FontWeight.Medium
+                    )
+
+                    Text(
+                        text = "da €25",
+                        fontSize = 14.sp,
+                        color = EventraColors.TextDark,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
     }
-}
 
-@Composable
-fun WishlistVuota(message: String) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.05f)
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.BookmarkBorder,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.5f),
-                modifier = Modifier.size(48.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = message,
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            delay(100)
+            isPressed = false
         }
     }
 }
 
-// Funzioni di supporto
-fun getVisibilitaColore(visibilita: Visibilita): Color {
-    return when(visibilita) {
-        Visibilita.PRIVATA -> Color(0xFFF44336)
-        Visibilita.CONDIVISA -> Color(0xFF2196F3)
-        else -> Color(0xFF9C27B0)
-    }
-}
+@Composable
+fun WishlistEmptyState(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = EventraColors.TextGray,
+                modifier = Modifier.size(72.dp)
+            )
 
-fun getVisibilitaIcona(visibilita: Visibilita): androidx.compose.ui.graphics.vector.ImageVector {
-    return when(visibilita) {
-        Visibilita.PRIVATA -> Icons.Default.Lock
-        Visibilita.CONDIVISA -> Icons.Default.Share
-        else -> Icons.Default.Visibility
-    }
-}
+            Spacer(modifier = Modifier.height(20.dp))
 
-fun visibilitaToString(visibilita: Visibilita): String {
-    return when(visibilita) {
-        Visibilita.PRIVATA -> "PRIVATA"
-        Visibilita.CONDIVISA -> "CONDIVISA"
-        else -> visibilita.name.lowercase().replaceFirstChar { it.uppercase() }
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = EventraColors.TextDark,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = subtitle,
+                fontSize = 14.sp,
+                color = EventraColors.TextGray,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
