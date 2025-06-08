@@ -19,17 +19,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.room.util.appendPlaceholders
 import com.example.eventra.screens.EventraColors
 import com.example.eventra.screens.HomeScreen
 import com.example.eventra.screens.LoginScreen
 import com.example.eventra.screens.SearchScreen
 import com.example.eventra.screens.WishlistScreen
+import com.example.eventra.screens.ProfileScreen
 import com.example.eventra.ui.theme.EventraTheme
 import com.example.eventra.viewmodels.LoginViewModel
+import com.example.eventra.untils.SessionManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,10 +52,26 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun HomePage() {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val loginViewModel: LoginViewModel = viewModel {
+        LoginViewModel(context.applicationContext as Application)
+    }
+
     val selectedIndex = remember { mutableIntStateOf(0) }
-    var showHomeScreen by remember { mutableStateOf(false) }
+    var isUserLoggedIn by remember { mutableStateOf(sessionManager.isLoggedIn()) }
 
+    // Observer per lo stato del login
+    val loginState by loginViewModel.loginState.collectAsState()
 
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginViewModel.LoginState.Success -> {
+                isUserLoggedIn = true
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -71,11 +88,23 @@ fun HomePage() {
                 0 -> HomeScreen()
                 1 -> SearchScreen()
                 2 -> WishlistScreen()
-
-
-
-
-
+                3 -> {
+                    if (isUserLoggedIn) {
+                        ProfileScreen(
+                            onLogout = {
+                                sessionManager.clearSession()
+                                isUserLoggedIn = false
+                            }
+                        )
+                    } else {
+                        LoginScreen(
+                            onLoginSuccess = {
+                                isUserLoggedIn = true
+                            },
+                            viewModel = loginViewModel
+                        )
+                    }
+                }
             }
         }
     }
@@ -134,10 +163,12 @@ fun EventraBottomBar(selectedIndex: MutableState<Int>) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = EventraColors.PrimaryOrange,
                 selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedIconColor = EventraColors.TextGray,
                 unselectedTextColor = EventraColors.TextGray,
                 indicatorColor = EventraColors.LightOrange
             )
         )
+
         // Wishlist Tab
         NavigationBarItem(
             selected = selectedIndex.value == 2,
@@ -158,10 +189,13 @@ fun EventraBottomBar(selectedIndex: MutableState<Int>) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = EventraColors.PrimaryOrange,
                 selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedIconColor = EventraColors.TextGray,
                 unselectedTextColor = EventraColors.TextGray,
                 indicatorColor = EventraColors.LightOrange
             )
         )
+
+        // Account Tab
         NavigationBarItem(
             selected = selectedIndex.value == 3,
             onClick = { selectedIndex.value = 3 },
@@ -181,6 +215,7 @@ fun EventraBottomBar(selectedIndex: MutableState<Int>) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = EventraColors.PrimaryOrange,
                 selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedIconColor = EventraColors.TextGray,
                 unselectedTextColor = EventraColors.TextGray,
                 indicatorColor = EventraColors.LightOrange
             )

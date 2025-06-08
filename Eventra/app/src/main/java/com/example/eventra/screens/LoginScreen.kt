@@ -40,20 +40,7 @@ import kotlinx.coroutines.delay
 import com.example.eventra.R
 import com.example.eventra.viewmodels.LoginViewModel
 
-// Colori per il tema di login
-object EventraLoginColors {
-    val PrimaryBlue = Color(0xFF1E3A8A) // Blu principale
-    val SecondaryBlue = Color(0xFF3B82F6) // Blu secondario
-    val AccentBlue = Color(0xFF60A5FA) // Blu accento
-    val LightBlue = Color(0xFFDBEAFE) // Blu chiaro
-    val BackgroundLight = Color(0xFFF8FAFC) // Sfondo chiaro
-    val CardWhite = Color(0xFFFFFFFF) // Bianco card
-    val TextDark = Color(0xFF1F2937) // Testo scuro
-    val TextGray = Color(0xFF6B7280) // Testo grigio
-    val BorderGray = Color(0xFFD1D5DB) // Bordi grigi
-    val SuccessGreen = Color(0xFF10B981) // Verde successo
-    val ErrorRed = Color(0xFFEF4444) // Rosso errore
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +68,9 @@ fun LoginScreen(
     var logoScale by remember { mutableStateOf(0.8f) }
     var cardAlpha by remember { mutableStateOf(0f) }
 
+    // Validazione password in tempo reale
+    var passwordError by remember { mutableStateOf("") }
+
     // Google Sign In
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -88,7 +78,6 @@ fun LoginScreen(
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account = task.getResult(ApiException::class.java)
-            // Integrazione con backend OAuth
             onLoginSuccess()
         } catch (e: ApiException) {
             // Gestione errore
@@ -112,15 +101,26 @@ fun LoginScreen(
         }
     }
 
+    // Validazione password per registrazione
+// Validazione password per registrazione
+    LaunchedEffect(password, isLoginMode) {
+        if (!isLoginMode && password.isNotEmpty()) {
+            passwordError = validatePassword(password)
+        } else {
+            passwordError = ""
+        }
+    }
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        EventraLoginColors.PrimaryBlue,
-                        EventraLoginColors.SecondaryBlue,
-                        EventraLoginColors.AccentBlue
+                        EventraColors.PrimaryOrange,
+                        EventraColors.SecondaryOrange,
+                        EventraColors.DarkOrange
                     )
                 )
             )
@@ -151,6 +151,7 @@ fun LoginScreen(
                 email = email,
                 password = password,
                 passwordVisible = passwordVisible,
+                passwordError = passwordError,
                 nome = nome,
                 cognome = cognome,
                 telefono = telefono,
@@ -161,20 +162,36 @@ fun LoginScreen(
                 onCognomeChange = { cognome = it },
                 onTelefonoChange = { telefono = it },
                 onLoginClick = { viewModel.login(email, password) },
-                onRegisterClick = { viewModel.register(nome, cognome, email, password, telefono) },
+                onRegisterClick = {
+                    if (passwordError.isEmpty()) {
+                        viewModel.register(nome, cognome, email, password, telefono)
+                    }
+                },
                 onGoogleSignIn = {
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken(context.getString(R.string.web_client_id))
-                        .requestEmail()
-                        .build()
+                    try {
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                            .requestIdToken(context.getString(R.string.web_client_id))
+                            .requestEmail()
+                            .build()
 
-                    val googleSignInClient = GoogleSignIn.getClient(context as Activity, gso)
-                    val signInIntent = googleSignInClient.signInIntent
-                    googleSignInLauncher.launch(signInIntent)
+                        val googleSignInClient = GoogleSignIn.getClient(context as Activity, gso)
+                        val signInIntent = googleSignInClient.signInIntent
+                        googleSignInLauncher.launch(signInIntent)
+                    } catch (e: Exception) {
+                        // Fallback se non è disponibile
+                    }
                 },
                 onModeSwitch = {
                     isLoginMode = !isLoginMode
                     viewModel.clearError()
+                    // Reset campi
+                    if (isLoginMode) {
+                        nome = ""
+                        cognome = ""
+                        telefono = ""
+                    }
+                    password = ""
+                    passwordError = ""
                 }
             )
         }
@@ -182,7 +199,9 @@ fun LoginScreen(
         // Loading Overlay
         if (isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center
             ) {
                 EventraLoadingIndicator()
@@ -213,7 +232,7 @@ fun EventraLoginHeader(
         Card(
             modifier = Modifier.size(100.dp),
             shape = CircleShape,
-            colors = CardDefaults.cardColors(containerColor = EventraLoginColors.CardWhite),
+            colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
             elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
         ) {
             Box(
@@ -273,6 +292,7 @@ fun EventraLoginCard(
     email: String,
     password: String,
     passwordVisible: Boolean,
+    passwordError: String,
     nome: String,
     cognome: String,
     telefono: String,
@@ -297,7 +317,7 @@ fun EventraLoginCard(
             .fillMaxWidth()
             .graphicsLayer { this.alpha = animatedAlpha },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = EventraLoginColors.CardWhite),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
     ) {
         Column(
@@ -331,6 +351,8 @@ fun EventraLoginCard(
                         email = email,
                         password = password,
                         passwordVisible = passwordVisible,
+                        passwordError = passwordError,
+                        isRegistration = !loginMode,
                         onEmailChange = onEmailChange,
                         onPasswordChange = onPasswordChange,
                         onPasswordVisibilityToggle = onPasswordVisibilityToggle
@@ -347,6 +369,7 @@ fun EventraLoginCard(
             EventraMainButton(
                 isLoginMode = isLoginMode,
                 isLoading = isLoading,
+                canProceed = if (isLoginMode) true else passwordError.isEmpty() && password.isNotEmpty(),
                 onLoginClick = onLoginClick,
                 onRegisterClick = onRegisterClick
             )
@@ -414,17 +437,18 @@ fun EventraLoginFields(
     email: String,
     password: String,
     passwordVisible: Boolean,
+    passwordError: String,
+    isRegistration: Boolean,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPasswordVisibilityToggle: () -> Unit
-) {
-    EventraTextField(
-        value = email,
-        onValueChange = onEmailChange,
-        label = "Email",
-        icon = Icons.Default.Email,
-        keyboardType = KeyboardType.Email
-    )
+) {EventraTextField(
+    value = email,
+    onValueChange = onEmailChange,
+    label = "Email",
+    icon = Icons.Default.Email,
+    keyboardType = KeyboardType.Email
+)
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -432,7 +456,9 @@ fun EventraLoginFields(
         value = password,
         onValueChange = onPasswordChange,
         passwordVisible = passwordVisible,
-        onPasswordVisibilityToggle = onPasswordVisibilityToggle
+        onPasswordVisibilityToggle = onPasswordVisibilityToggle,
+        error = if (isRegistration) passwordError else "",
+        isRegistration = isRegistration
     )
 }
 
@@ -444,30 +470,45 @@ fun EventraTextField(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    error: String = ""
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = EventraLoginColors.PrimaryBlue
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            leadingIcon = {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = EventraColors.PrimaryOrange
+                )
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            isError = error.isNotEmpty(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = if (error.isNotEmpty()) Color.Red else EventraColors.PrimaryOrange,
+                focusedLabelColor = if (error.isNotEmpty()) Color.Red else EventraColors.PrimaryOrange,
+                unfocusedBorderColor = if (error.isNotEmpty()) Color.Red else EventraColors.DividerGray,
+                focusedLeadingIconColor = EventraColors.PrimaryOrange,
+                errorBorderColor = Color.Red,
+                errorLabelColor = Color.Red
             )
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        modifier = modifier.fillMaxWidth(),
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = EventraLoginColors.PrimaryBlue,
-            focusedLabelColor = EventraLoginColors.PrimaryBlue,
-            unfocusedBorderColor = EventraLoginColors.BorderGray,
-            focusedLeadingIconColor = EventraLoginColors.PrimaryBlue
         )
-    )
+
+        if (error.isNotEmpty()) {
+            Text(
+                text = error,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -476,43 +517,134 @@ fun EventraPasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     passwordVisible: Boolean,
-    onPasswordVisibilityToggle: () -> Unit
+    onPasswordVisibilityToggle: () -> Unit,
+    error: String = "",
+    isRegistration: Boolean = false
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text("Password") },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Lock,
-                contentDescription = null,
-                tint = EventraLoginColors.PrimaryBlue
-            )
-        },
-        trailingIcon = {
-            IconButton(onClick = onPasswordVisibilityToggle) {
+    Column {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text("Password") },
+            leadingIcon = {
                 Icon(
-                    imageVector = if (passwordVisible) Icons.Default.Visibility
-                    else Icons.Default.VisibilityOff,
-                    contentDescription = if (passwordVisible) "Nascondi password" else "Mostra password",
-                    tint = EventraLoginColors.TextGray
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = EventraColors.PrimaryOrange
                 )
-            }
-        },
-        visualTransformation = if (passwordVisible) VisualTransformation.None
-        else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = EventraLoginColors.PrimaryBlue,
-            focusedLabelColor = EventraLoginColors.PrimaryBlue,
-            unfocusedBorderColor = EventraLoginColors.BorderGray,
-            focusedLeadingIconColor = EventraLoginColors.PrimaryBlue
+            },
+            trailingIcon = {
+                IconButton(onClick = onPasswordVisibilityToggle) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Default.Visibility
+                        else Icons.Default.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Nascondi password" else "Mostra password",
+                        tint = EventraColors.TextGray
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) VisualTransformation.None
+            else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            isError = error.isNotEmpty(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = if (error.isNotEmpty()) Color.Red else EventraColors.PrimaryOrange,
+                focusedLabelColor = if (error.isNotEmpty()) Color.Red else EventraColors.PrimaryOrange,
+                unfocusedBorderColor = if (error.isNotEmpty()) Color.Red else EventraColors.DividerGray,
+                focusedLeadingIconColor = EventraColors.PrimaryOrange,
+                errorBorderColor = Color.Red,
+                errorLabelColor = Color.Red
+            )
         )
-    )
+
+        if (isRegistration && value.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFF7FAFC)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp)
+                ) {
+                    Text(
+                        text = "Requisiti password:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EventraColors.TextDark
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    PasswordRequirement(
+                        text = "Almeno 6 caratteri",
+                        isValid = value.length >= 6
+                    )
+                    PasswordRequirement(
+                        text = "Una lettera minuscola",
+                        isValid = value.any { it.isLowerCase() }
+                    )
+                    PasswordRequirement(
+                        text = "Una lettera maiuscola",
+                        isValid = value.any { it.isUpperCase() }
+                    )
+                    PasswordRequirement(
+                        text = "Un numero",
+                        isValid = value.any { it.isDigit() }
+                    )
+                    PasswordRequirement(
+                        text = "Un carattere speciale (@\$!%*?&)",
+                        isValid = value.any { it in "@\$!%*?&" }
+                    )
+                    PasswordRequirement(
+                        text = "Solo caratteri consentiti",
+                        isValid = value.all { it.isLetterOrDigit() || it in "@\$!%*?&" }
+                    )
+                }
+            }
+        }
+
+        if (error.isNotEmpty()) {
+            Text(
+                text = error,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
 }
+
+@Composable
+fun PasswordRequirement(
+    text: String,
+    isValid: Boolean
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Icon(
+            imageVector = if (isValid) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+            contentDescription = null,
+            tint = if (isValid) Color.Green else EventraColors.TextGray,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            fontSize = 11.sp,
+            color = if (isValid) Color.Green else EventraColors.TextGray
+        )
+    }
+}
+
 
 @Composable
 fun EventraErrorMessage(loginState: LoginViewModel.LoginState) {
@@ -528,7 +660,7 @@ fun EventraErrorMessage(loginState: LoginViewModel.LoginState) {
                     .padding(vertical = 16.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = EventraLoginColors.ErrorRed.copy(alpha = 0.1f)
+                    containerColor = Color(0xFFFFEBEE)
                 )
             ) {
                 Row(
@@ -538,13 +670,13 @@ fun EventraErrorMessage(loginState: LoginViewModel.LoginState) {
                     Icon(
                         imageVector = Icons.Default.Error,
                         contentDescription = null,
-                        tint = EventraLoginColors.ErrorRed,
+                        tint = Color(0xFFD32F2F),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = loginState.message,
-                        color = EventraLoginColors.ErrorRed,
+                        color = Color(0xFFD32F2F),
                         fontSize = 14.sp,
                         modifier = Modifier.weight(1f)
                     )
@@ -554,11 +686,13 @@ fun EventraErrorMessage(loginState: LoginViewModel.LoginState) {
     }
 }
 
+
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun EventraMainButton(
     isLoginMode: Boolean,
     isLoading: Boolean,
+    canProceed: Boolean,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
@@ -578,10 +712,10 @@ fun EventraMainButton(
             .fillMaxWidth()
             .height(56.dp)
             .scale(scale),
-        enabled = !isLoading,
+        enabled = !isLoading && canProceed,
         colors = ButtonDefaults.buttonColors(
-            containerColor = EventraLoginColors.PrimaryBlue,
-            disabledContainerColor = EventraLoginColors.BorderGray
+            containerColor = EventraColors.PrimaryOrange,
+            disabledContainerColor = EventraColors.DividerGray
         ),
         shape = RoundedCornerShape(28.dp),
         elevation = ButtonDefaults.buttonElevation(
@@ -637,20 +771,20 @@ fun EventraDivider() {
             .padding(vertical = 28.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Divider(
+        HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = EventraLoginColors.BorderGray
+            color = EventraColors.DividerGray
         )
         Text(
             text = "oppure",
             modifier = Modifier.padding(horizontal = 16.dp),
-            color = EventraLoginColors.TextGray,
+            color = EventraColors.TextGray,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
-        Divider(
+        HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = EventraLoginColors.BorderGray
+            color = EventraColors.DividerGray
         )
     }
 }
@@ -675,28 +809,29 @@ fun EventraGoogleButton(onGoogleSignIn: () -> Unit) {
             .scale(scale),
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = EventraLoginColors.TextDark,
+            contentColor = EventraColors.TextDark,
             containerColor = Color.Transparent
         ),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            EventraLoginColors.BorderGray
+            EventraColors.DividerGray
         )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_google),
+            Icon(
+                imageVector = Icons.Default.Login,
                 contentDescription = "Google",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
+                tint = EventraColors.PrimaryOrange
             )
             Text(
                 text = "Continua con Google",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = EventraLoginColors.TextDark
+                color = EventraColors.TextDark
             )
         }
     }
@@ -706,6 +841,17 @@ fun EventraGoogleButton(onGoogleSignIn: () -> Unit) {
             delay(100)
             isPressed = false
         }
+    }
+}
+fun validatePassword(password: String): String {
+    return when {
+        password.length < 6 -> "Minimo 6 caratteri"
+        !password.any { it.isLowerCase() } -> "Serve almeno una lettera minuscola"
+        !password.any { it.isUpperCase() } -> "Serve almeno una lettera maiuscola"
+        !password.any { it.isDigit() } -> "Serve almeno un numero"
+        !password.any { it in "@\$!%*?&" } -> "Serve un carattere speciale (@\$!%*?&)"
+        !password.all { it.isLetterOrDigit() || it in "@\$!%*?&" } -> "Caratteri non consentiti. Usa solo lettere, numeri e @\$!%*?&"
+        else -> ""
     }
 }
 
@@ -720,7 +866,7 @@ fun EventraSwitchModeButton(
     ) {
         Text(
             text = if (isLoginMode) "Non hai un account? Registrati" else "Hai già un account? Accedi",
-            color = EventraLoginColors.PrimaryBlue,
+            color = EventraColors.PrimaryOrange,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
@@ -742,7 +888,7 @@ fun EventraLoadingIndicator() {
     Card(
         modifier = Modifier.size(100.dp),
         shape = RoundedCornerShape(50.dp),
-        colors = CardDefaults.cardColors(containerColor = EventraLoginColors.CardWhite),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
         Box(
@@ -755,7 +901,7 @@ fun EventraLoadingIndicator() {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Loading",
-                    tint = EventraLoginColors.PrimaryBlue,
+                    tint = EventraColors.PrimaryOrange,
                     modifier = Modifier
                         .size(32.dp)
                         .graphicsLayer { rotationZ = rotation }
@@ -764,7 +910,7 @@ fun EventraLoadingIndicator() {
                 Text(
                     text = "Attendere...",
                     fontSize = 12.sp,
-                    color = EventraLoginColors.TextGray,
+                    color = EventraColors.TextGray,
                     fontWeight = FontWeight.Medium
                 )
             }
