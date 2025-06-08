@@ -10,7 +10,10 @@ import it.unical.ea.eventra.data.service.OrdineService;
 import it.unical.ea.eventra.dto.OrdineDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/ordine")
@@ -67,5 +70,20 @@ public class OrdineController {
     public ResponseEntity<String> eliminaOrdine(@PathVariable Long ordineId) {
         ordineService.delete(ordineId);
         return ResponseEntity.ok("ORDINE ELIMINATO CON SUCCESSO");
+    }
+    @Operation(
+            summary = "Ottieni tutti gli ordini di un utente",
+            description = "Recupera tutti gli ordini associati a un utente specifico tramite il suo ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Ordini recuperati con successo"),
+            @ApiResponse(responseCode = "404", description = "Utente non trovato"),
+            @ApiResponse(responseCode = "403", description = "Accesso negato")
+    })
+    @GetMapping("/utente/{utenteId}")
+    @PreAuthorize("hasRole('USER') and (#utenteId == authentication.principal.id or hasRole('ADMIN'))")
+    public ResponseEntity<List<OrdineDTO>> getOrdiniUtente(@PathVariable Long utenteId) {
+        List<OrdineDTO> ordini = ordineService.findByProprietario(utenteId);
+        return ResponseEntity.ok(ordini);
     }
 }

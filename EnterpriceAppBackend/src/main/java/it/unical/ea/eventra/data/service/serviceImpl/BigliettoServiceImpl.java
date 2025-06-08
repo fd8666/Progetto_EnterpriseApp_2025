@@ -138,14 +138,40 @@ public class BigliettoServiceImpl implements BigliettoService {
         dto.setCognomeSpettatore(biglietto.getCognomeSpettatore());
         dto.setEmailSpettatore(biglietto.getEmailSpettatore());
         dto.setDataCreazione(biglietto.getDataCreazione());
-        dto.setEventoId(biglietto.getEvento().getId());
-        dto.setTipoPostoId(biglietto.getTipoPosto().getId());
+
+        // Evento info
+        if (biglietto.getEvento() != null) {
+            dto.setEventoId(biglietto.getEvento().getId());
+            dto.setEventoNome(biglietto.getEvento().getNome());
+            if (biglietto.getEvento().getDataOraEvento() != null) {
+                dto.setDataEvento(biglietto.getEvento().getDataOraEvento().toString());
+            }
+        }
+
+        // TipoPosto info
+        if (biglietto.getTipoPosto() != null) {
+            dto.setTipoPostoId(biglietto.getTipoPosto().getId());
+            dto.setTipoPostoNome(biglietto.getTipoPosto().getNome());
+            dto.setPrezzo(biglietto.getTipoPosto().getPrezzo());
+        }
+
+        // Pagamento info
         if (biglietto.getPagamento() != null) {
             dto.setPagamentoId(biglietto.getPagamento().getId());
+
+            // Ordine info
+            if (biglietto.getPagamento().getOrdine() != null) {
+                dto.setOrdineId(biglietto.getPagamento().getOrdine().getId());
+
+                // Utente info
+                if (biglietto.getPagamento().getOrdine().getProprietario() != null) {
+                    dto.setUtenteId(biglietto.getPagamento().getOrdine().getProprietario().getId());
+                }
+            }
         }
+
         return dto;
     }
-
     public void checkBigliettiScaduti() {
         // Trova tutti gli eventi passati
         List<Biglietto> biglietti = bigliettoRepository.findAll();
