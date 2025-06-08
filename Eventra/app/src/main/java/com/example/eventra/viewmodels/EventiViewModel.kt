@@ -45,6 +45,8 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
     private val _error = MutableStateFlow<ErrorData?>(null)
     val error: StateFlow<ErrorData?> = _error.asStateFlow()
 
+
+
     // Funzioni per ottenere eventi
     fun getAllEventi() = getEventi("", _eventi, "allEventi")
 
@@ -78,25 +80,30 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
 
                 val eventoData: EventoData = gson.fromJson(responseJson, EventoData::class.java)
 
+
+
                 _eventoDetail.value = eventoData
             } catch (e: IOException) {
                 _error.value = ErrorData(0, _application.getString(R.string.network_error))
                 Log.e("EventiViewModel", "Network error: ${e.message}")
+
             } catch (e: EOFException) {
                 _error.value = ErrorData(0, _application.getString(R.string.end_of_stream_error))
                 Log.e("EventiViewModel", "End of stream error: ${e.message}")
+
             } catch (e: Exception) {
                 _error.value = ErrorData(0, _application.getString(R.string.unexpected_error))
                 Log.e("EventiViewModel", "Unexpected error: ${e.message}")
+
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun searchEventiByNome(nome: String) = getEventi("/search?nome=${URLEncoder.encode(nome, "UTF-8")}", _eventi, "search")
+    fun searchEventiByNome(nome: String) = getEventi("/search?nome=$nome", _eventi, "search")
 
-    fun searchEventiByLuogo(luogo: String) = getEventi("/luogo?luogo=${URLEncoder.encode(luogo, "UTF-8")}", _eventi, "luogo")
+    fun searchEventiByLuogo(luogo: String) = getEventi("/luogo?luogo=$luogo", _eventi, "luogo")
 
     private fun getEventi(urlSuffix: String, targetFlow: MutableStateFlow<List<EventoData>?>, category: String) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -118,6 +125,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
                 if (!response.isSuccessful) {
                     _error.value = ErrorData(response.code, _application.getString(R.string.http_error))
                     Log.e("EventiViewModel", "HTTP error: ${response.code} for category: $category")
+
                     return@launch
                 }
 
@@ -126,10 +134,12 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
 
                 val eventiList: List<EventoData> = gson.fromJson(responseJson, Array<EventoData>::class.java).toList()
 
+
                 targetFlow.value = eventiList
             } catch (e: IOException) {
                 _error.value = ErrorData(0, _application.getString(R.string.network_error))
                 Log.e("EventiViewModel", "Network error: ${e.message}")
+
             } catch (e: EOFException) {
                 _error.value = ErrorData(0, _application.getString(R.string.end_of_stream_error))
                 Log.e("EventiViewModel", "End of stream error: ${e.message}")
@@ -353,3 +363,6 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 }
+
+
+

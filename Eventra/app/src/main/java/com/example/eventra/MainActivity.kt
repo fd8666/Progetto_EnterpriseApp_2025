@@ -1,13 +1,18 @@
 package com.example.eventra
 
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
@@ -16,9 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.room.util.appendPlaceholders
+import com.example.eventra.screens.EventraColors
 import com.example.eventra.screens.HomeScreen
+import com.example.eventra.screens.LoginScreen
 import com.example.eventra.screens.SearchScreen
+import com.example.eventra.screens.WishlistScreen
 import com.example.eventra.ui.theme.EventraTheme
+import com.example.eventra.viewmodels.LoginViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +52,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HomePage() {
     val selectedIndex = remember { mutableIntStateOf(0) }
+    var showHomeScreen by remember { mutableStateOf(false) }
+
+
 
     Scaffold(
         bottomBar = {
@@ -56,6 +70,12 @@ fun HomePage() {
             when (selectedIndex.intValue) {
                 0 -> HomeScreen()
                 1 -> SearchScreen()
+                2 -> WishlistScreen()
+
+
+
+
+
             }
         }
     }
@@ -64,8 +84,9 @@ fun HomePage() {
 @Composable
 fun EventraBottomBar(selectedIndex: MutableState<Int>) {
     NavigationBar(
-        containerColor = Color.Black.copy(alpha = 0.9f),
-        contentColor = Color.White
+        containerColor = Color.White,
+        contentColor = EventraColors.TextDark,
+        tonalElevation = 8.dp
     ) {
         // Home Tab
         NavigationBarItem(
@@ -74,22 +95,22 @@ fun EventraBottomBar(selectedIndex: MutableState<Int>) {
             icon = {
                 Icon(
                     imageVector = if (selectedIndex.value == 0) Icons.Filled.Home else Icons.Outlined.Home,
-                    contentDescription = stringResource(R.string.nav_home),
+                    contentDescription = "Home",
                     modifier = Modifier.size(24.dp)
                 )
             },
             label = {
                 Text(
-                    text = stringResource(R.string.nav_home),
+                    text = "Home",
                     style = MaterialTheme.typography.labelSmall
                 )
             },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFF6A00FF),
-                selectedTextColor = Color(0xFF6A00FF),
-                unselectedIconColor = Color.White.copy(alpha = 0.7f),
-                unselectedTextColor = Color.White.copy(alpha = 0.7f),
-                indicatorColor = Color(0xFF6A00FF).copy(alpha = 0.2f)
+                selectedIconColor = EventraColors.PrimaryOrange,
+                selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedIconColor = EventraColors.TextGray,
+                unselectedTextColor = EventraColors.TextGray,
+                indicatorColor = EventraColors.LightOrange
             )
         )
 
@@ -100,22 +121,68 @@ fun EventraBottomBar(selectedIndex: MutableState<Int>) {
             icon = {
                 Icon(
                     imageVector = if (selectedIndex.value == 1) Icons.Filled.Search else Icons.Outlined.Search,
-                    contentDescription = stringResource(R.string.nav_search),
+                    contentDescription = "Cerca",
                     modifier = Modifier.size(24.dp)
                 )
             },
             label = {
                 Text(
-                    text = stringResource(R.string.nav_search),
+                    text = "Cerca",
                     style = MaterialTheme.typography.labelSmall
                 )
             },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFF6A00FF),
-                selectedTextColor = Color(0xFF6A00FF),
-                unselectedIconColor = Color.White.copy(alpha = 0.7f),
-                unselectedTextColor = Color.White.copy(alpha = 0.7f),
-                indicatorColor = Color(0xFF6A00FF).copy(alpha = 0.2f)
+                selectedIconColor = EventraColors.PrimaryOrange,
+                selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedTextColor = EventraColors.TextGray,
+                indicatorColor = EventraColors.LightOrange
+            )
+        )
+        // Wishlist Tab
+        NavigationBarItem(
+            selected = selectedIndex.value == 2,
+            onClick = { selectedIndex.value = 2 },
+            icon = {
+                Icon(
+                    imageVector = if (selectedIndex.value == 2) Icons.Filled.Favorite else Icons.Outlined.Favorite,
+                    contentDescription = "Favorite",
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = {
+                Text(
+                    text = "Favorite",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = EventraColors.PrimaryOrange,
+                selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedTextColor = EventraColors.TextGray,
+                indicatorColor = EventraColors.LightOrange
+            )
+        )
+        NavigationBarItem(
+            selected = selectedIndex.value == 3,
+            onClick = { selectedIndex.value = 3 },
+            icon = {
+                Icon(
+                    imageVector = if (selectedIndex.value == 3) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
+                    contentDescription = "Account",
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = {
+                Text(
+                    text = "Account",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = EventraColors.PrimaryOrange,
+                selectedTextColor = EventraColors.PrimaryOrange,
+                unselectedTextColor = EventraColors.TextGray,
+                indicatorColor = EventraColors.LightOrange
             )
         )
     }
