@@ -1,11 +1,21 @@
 package com.example.eventra.viewmodels.data
 
 data class BigliettoData(
-    val id: Long,
-    val nomeSpettatore: String?,
-    val cognomeSpettatore: String?,
-    val prezzo: Double,
-    val eventoNome: String,
-    val tipoPostoNome: String,
-    val dataEvento: String
+    val id: Long? = null,
+    val nomeSpettatore: String = "",
+    val cognomeSpettatore: String = "",
+    val emailSpettatore: String = "",
+    val eventoId: Long,
+    val tipoPostoId: Long,
+    val pagamentoId: Long? = null,
+    val isExpanded: Boolean = true // Solo per UI
+)
+
+data class BigliettoRequest(
+    val nomeSpettatore: String,
+    val cognomeSpettatore: String,
+    val emailSpettatore: String,
+    val eventoId: Long,
+    val TipoPostoId: Long,
+    val pagamentoId: Long
 )

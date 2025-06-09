@@ -3,7 +3,6 @@ package com.example.eventra.viewmodels
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.eventra.R
 import com.example.eventra.Visibilita
 import com.example.eventra.viewmodels.data.ErrorData
@@ -22,11 +21,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.EOFException
 import java.io.IOException
 import java.net.URL
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.net.URLEncoder
@@ -128,7 +124,7 @@ class WishlistViewModel(application: Application) : AndroidViewModel(application
     fun getWishlistsByVisibilita(visibilita: Visibilita) =
         getWishlists("/visibilita/${visibilita.name}", _wishlistsByVisibilita, "byVisibilita")
 
-    fun getWishlistsByUtenteAndVisibilita(utenteId: Long, visibilita: Visibilita) =
+    fun getWishlistsByUtenteAndVisibilita(utenteId: Long?, visibilita: Visibilita) =
         getWishlists("/utente/$utenteId/visibilita/${visibilita.name}", _wishlistsByVisibilita, "byUtenteAndVisibilita")
 
     fun addEventoToWishlist(wishlistId: Long, eventoId: Long, onSuccess: () -> Unit = {}) {
@@ -136,6 +132,7 @@ class WishlistViewModel(application: Application) : AndroidViewModel(application
             _error.value = null
 
             val urlString = "$backendUrl/$wishlistId/evento/$eventoId"
+
             Log.d("WishlistViewModel", "Adding evento $eventoId to wishlist $wishlistId: $urlString")
 
             val client = OkHttpClient()
@@ -192,7 +189,7 @@ class WishlistViewModel(application: Application) : AndroidViewModel(application
         }?.id
     }
 
-    fun getWishlistCondiviseConUtente(utenteId: Long) {
+    fun getWishlistCondiviseConUtente(utenteId: Long?) {
         CoroutineScope(Dispatchers.IO).launch {
             _wishlistCondivise.value = emptyList()
             _error.value = null

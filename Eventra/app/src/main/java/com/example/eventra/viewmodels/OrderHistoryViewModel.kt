@@ -135,14 +135,14 @@ class OrderHistoryViewModel(application: Application) : AndroidViewModel(applica
                     val dataArray = jsonWrapper.getJSONArray("data")
                     for (i in 0 until dataArray.length()) {
                         val ticketJson = dataArray.getJSONObject(i)
-                        tickets.add(parseTicketFromJson(ticketJson))
+//                        tickets.add(parseTicketFromJson(ticketJson))
                     }
                 } else {
                     // Formato array diretto
                     val jsonArray = JSONArray(responseBody)
                     for (i in 0 until jsonArray.length()) {
                         val ticketJson = jsonArray.getJSONObject(i)
-                        tickets.add(parseTicketFromJson(ticketJson))
+//                        tickets.add(parseTicketFromJson(ticketJson))
                     }
                 }
             } catch (e: Exception) {
@@ -150,7 +150,7 @@ class OrderHistoryViewModel(application: Application) : AndroidViewModel(applica
                 val jsonArray = JSONArray(responseBody)
                 for (i in 0 until jsonArray.length()) {
                     val ticketJson = jsonArray.getJSONObject(i)
-                    tickets.add(parseTicketFromJson(ticketJson))
+//                    tickets.add(parseTicketFromJson(ticketJson))
                 }
             }
 
@@ -161,18 +161,18 @@ class OrderHistoryViewModel(application: Application) : AndroidViewModel(applica
             emptyList()
         }
     }
-
-    private fun parseTicketFromJson(ticketJson: JSONObject): BigliettoData {
-        return BigliettoData(
-            id = ticketJson.optLong("id", 0),
-            nomeSpettatore = ticketJson.optString("nomeSpettatore", ""),
-            cognomeSpettatore = ticketJson.optString("cognomeSpettatore", ""),
-            prezzo = ticketJson.optDouble("prezzo", 0.0),
-            eventoNome = ticketJson.optString("eventoNome", "Evento sconosciuto"),
-            tipoPostoNome = ticketJson.optString("tipoPostoNome", "Posto standard"),
-            dataEvento = ticketJson.optString("dataEvento", "Data non disponibile")
-        )
-    }
+//
+//    private fun parseTicketFromJson(ticketJson: JSONObject): BigliettoData {
+//        return BigliettoData(
+//            id = ticketJson.optLong("id", 0),
+//            nomeSpettatore = ticketJson.optString("nomeSpettatore", ""),
+//            cognomeSpettatore = ticketJson.optString("cognomeSpettatore", ""),
+//            prezzo = ticketJson.optDouble("prezzo", 0.0),
+//            eventoNome = ticketJson.optString("eventoNome", "Evento sconosciuto"),
+//            tipoPostoNome = ticketJson.optString("tipoPostoNome", "Posto standard"),
+//            dataEvento = ticketJson.optString("dataEvento", "Data non disponibile")
+//        )
+//    }
 
     fun clearError() {
         _errorState.value = null

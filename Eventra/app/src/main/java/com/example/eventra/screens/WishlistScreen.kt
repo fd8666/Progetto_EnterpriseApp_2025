@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -37,9 +35,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eventra.Visibilita
 import com.example.eventra.viewmodels.EventiViewModel
+import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.WishlistViewModel
 import com.example.eventra.viewmodels.data.EventoData
-import com.example.eventra.viewmodels.data.WishlistData
 import kotlinx.coroutines.delay
 
 @SuppressLint("RememberReturnType")
@@ -56,6 +54,9 @@ fun WishlistScreen() {
         EventiViewModel(context.applicationContext as android.app.Application)
     }
 
+    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(context.applicationContext as android.app.Application) }
+    val userData by profileViewModel.userData.collectAsState()
+
     val wishlistsByVisibilita by wishlistViewModel.wishlistsByVisibilita.collectAsState()
     val wishlistCondivise by wishlistViewModel.wishlistCondivise.collectAsState()
     val eventi by eventiViewModel.eventi.collectAsState()
@@ -65,8 +66,8 @@ fun WishlistScreen() {
 
     // Carica i dati
     LaunchedEffect(Unit) {
-        wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
-        wishlistViewModel.getWishlistCondiviseConUtente(2)
+        wishlistViewModel.getWishlistsByUtenteAndVisibilita(userData?.id, Visibilita.PRIVATA)
+        wishlistViewModel.getWishlistCondiviseConUtente(userData?.id)
         eventiViewModel.getAllEventi()
     }
 
@@ -127,6 +128,7 @@ fun WishlistScreen() {
                                         evento = evento,
                                         wishlistViewModel = wishlistViewModel,
                                         isInWishlistContext = true,
+                                        userData = userData,
                                         onClick = { /* dettagli evento */ }
                                     )
                                 }
@@ -169,6 +171,7 @@ fun WishlistScreen() {
                                         evento = evento,
                                         wishlistViewModel = wishlistViewModel,
                                         isInWishlistContext = true,
+                                        userData = userData,
                                         onClick = { /* dettagli evento */ }
                                     )
                                 }
@@ -362,6 +365,7 @@ fun WishlistEventCard(
     modifier: Modifier = Modifier,
     wishlistViewModel: WishlistViewModel,
     isInWishlistContext: Boolean = false,
+    userData: com.example.eventra.viewmodels.data.UtenteData?,
     onClick: () -> Unit
 ) {
     var isPressed by remember { mutableStateOf(false) }
@@ -469,17 +473,17 @@ fun WishlistEventCard(
                                     wishlistViewModel.removeEventoFromWishlist(wishlistId, evento.id) {
                                         // Ricarica le wishlist dopo la rimozione
                                         if (isInWishlistContext) {
-                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
-                                            wishlistViewModel.getWishlistCondiviseConUtente(2)
+                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(userData?.id, Visibilita.PRIVATA)
+                                            wishlistViewModel.getWishlistCondiviseConUtente(userData?.id)
                                         } else {
-                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
+                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(userData?.id, Visibilita.PRIVATA)
                                         }
                                     }
                                 } else {
                                     // Aggiungi alla wishlist (solo se non siamo nel contesto wishlist)
                                     if (!isInWishlistContext) {
                                         wishlistViewModel.addEventoToWishlist(wishlistId, evento.id) {
-                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(2, Visibilita.PRIVATA)
+                                            wishlistViewModel.getWishlistsByUtenteAndVisibilita(userData?.id, Visibilita.PRIVATA)
                                         }
                                     }
                                 }

@@ -526,148 +526,148 @@ fun OrderHistorySection(
                 }
 
                 items(biglietti) { biglietto ->
-                    TicketCard(biglietto = biglietto)
+//                    TicketCard(biglietto = biglietto)
                 }
             }
         }
     }
 }
-
-@Composable
-fun TicketCard(
-    biglietto: com.example.eventra.viewmodels.data.BigliettoData
-) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        animationSpec = tween(300)
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { isExpanded = !isExpanded },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Header del biglietto
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = biglietto.eventoNome,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EventraColors.TextDark
-                    )
-
-                    Text(
-                        text = biglietto.tipoPostoNome,
-                        fontSize = 14.sp,
-                        color = EventraColors.TextGray
-                    )
-                }
-
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = "€${String.format("%.2f", biglietto.prezzo)}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EventraColors.PrimaryOrange
-                    )
-
-                    Icon(
-                        imageVector = Icons.Default.ExpandMore,
-                        contentDescription = null,
-                        tint = EventraColors.TextGray,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .graphicsLayer { rotationZ = rotationAngle }
-                    )
-                }
-            }
-
-            // Dettagli espandibili
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(
-                    modifier = Modifier.padding(top = 12.dp)
-                ) {
-                    Divider(color = EventraColors.DividerGray)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "ID Biglietto:",
-                            fontSize = 12.sp,
-                            color = EventraColors.TextGray
-                        )
-                        Text(
-                            text = "#${biglietto.id}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = EventraColors.TextDark
-                        )
-                    }
-
-                    if (!biglietto.nomeSpettatore.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Spettatore:",
-                                fontSize = 12.sp,
-                                color = EventraColors.TextGray
-                            )
-                            Text(
-                                text = "${biglietto.nomeSpettatore} ${biglietto.cognomeSpettatore ?: ""}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = EventraColors.TextDark
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Data Evento:",
-                            fontSize = 12.sp,
-                            color = EventraColors.TextGray
-                        )
-                        Text(
-                            text = biglietto.dataEvento,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = EventraColors.TextDark
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+//
+//@Composable
+//fun TicketCard(
+//    biglietto: com.example.eventra.viewmodels.data.BigliettoData
+//) {
+//    var isExpanded by remember { mutableStateOf(false) }
+//    val rotationAngle by animateFloatAsState(
+//        targetValue = if (isExpanded) 180f else 0f,
+//        animationSpec = tween(300)
+//    )
+//
+//    Card(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .clickable { isExpanded = !isExpanded },
+//        shape = RoundedCornerShape(12.dp),
+//        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
+//        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+//    ) {
+//        Column(
+//            modifier = Modifier.padding(16.dp)
+//        ) {
+//            // Header del biglietto
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Column(modifier = Modifier.weight(1f)) {
+//                    Text(
+//                        text = biglietto.eventoId,
+//                        fontSize = 16.sp,
+//                        fontWeight = FontWeight.Bold,
+//                        color = EventraColors.TextDark
+//                    )
+//
+//                    Text(
+//                        text = biglietto.tipoPostoNome,
+//                        fontSize = 14.sp,
+//                        color = EventraColors.TextGray
+//                    )
+//                }
+//
+//                Column(
+//                    horizontalAlignment = Alignment.End
+//                ) {
+//                    Text(
+//                        text = "€${String.format("%.2f", biglietto.prezzo)}",
+//                        fontSize = 16.sp,
+//                        fontWeight = FontWeight.Bold,
+//                        color = EventraColors.PrimaryOrange
+//                    )
+//
+//                    Icon(
+//                        imageVector = Icons.Default.ExpandMore,
+//                        contentDescription = null,
+//                        tint = EventraColors.TextGray,
+//                        modifier = Modifier
+//                            .size(20.dp)
+//                            .graphicsLayer { rotationZ = rotationAngle }
+//                    )
+//                }
+//            }
+//
+//            // Dettagli espandibili
+//            AnimatedVisibility(
+//                visible = isExpanded,
+//                enter = expandVertically() + fadeIn(),
+//                exit = shrinkVertically() + fadeOut()
+//            ) {
+//                Column(
+//                    modifier = Modifier.padding(top = 12.dp)
+//                ) {
+//                    Divider(color = EventraColors.DividerGray)
+//
+//                    Spacer(modifier = Modifier.height(12.dp))
+//
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        Text(
+//                            text = "ID Biglietto:",
+//                            fontSize = 12.sp,
+//                            color = EventraColors.TextGray
+//                        )
+//                        Text(
+//                            text = "#${biglietto.id}",
+//                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.Medium,
+//                            color = EventraColors.TextDark
+//                        )
+//                    }
+//
+//                    if (!biglietto.nomeSpettatore.isNullOrEmpty()) {
+//                        Spacer(modifier = Modifier.height(4.dp))
+//                        Row(
+//                            modifier = Modifier.fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.SpaceBetween
+//                        ) {
+//                            Text(
+//                                text = "Spettatore:",
+//                                fontSize = 12.sp,
+//                                color = EventraColors.TextGray
+//                            )
+//                            Text(
+//                                text = "${biglietto.nomeSpettatore} ${biglietto.cognomeSpettatore ?: ""}",
+//                                fontSize = 12.sp,
+//                                fontWeight = FontWeight.Medium,
+//                                color = EventraColors.TextDark
+//                            )
+//                        }
+//                    }
+//
+//                    Spacer(modifier = Modifier.height(4.dp))
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        Text(
+//                            text = "Data Evento:",
+//                            fontSize = 12.sp,
+//                            color = EventraColors.TextGray
+//                        )
+//                        Text(
+//                            text = biglietto.dataEvento,
+//                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.Medium,
+//                            color = EventraColors.TextDark
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 @Composable
 fun SettingsSection(
