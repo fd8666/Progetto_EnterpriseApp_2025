@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eventra.Visibilita
+import com.example.eventra.untils.SessionManager
 import com.example.eventra.viewmodels.EventiViewModel
 import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.WishlistViewModel
@@ -45,6 +46,15 @@ import kotlinx.coroutines.delay
 @Composable
 fun WishlistScreen() {
     val context = LocalContext.current
+
+    val sessionManager = remember { SessionManager(context) }
+    val isUserLoggedIn = remember { sessionManager.isLoggedIn() }
+
+    var showLoginAlert by remember { mutableStateOf(false) }
+
+    // Stati per la gestione dell'evento selezionato
+    var selectedEventoId by remember { mutableStateOf<Long?>(null) }
+    var showEventDetail by remember { mutableStateOf(false) }
 
     val wishlistViewModel: WishlistViewModel = viewModel {
         WishlistViewModel(context.applicationContext as android.app.Application)
@@ -92,12 +102,11 @@ fun WishlistScreen() {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Header Wishlist
+
             item {
                 WishlistHeader()
             }
 
-            // Tab Selector
             item {
                 WishlistTabSelector(
                     selectedTab = selectedTab,
@@ -110,7 +119,6 @@ fun WishlistScreen() {
             // Content based on selected tab
             when (selectedTab) {
                 0 -> {
-
                     if (eventiWishlistPrivate.isNotEmpty()) {
                         item {
                             LazyVerticalGrid(
@@ -129,7 +137,14 @@ fun WishlistScreen() {
                                         wishlistViewModel = wishlistViewModel,
                                         isInWishlistContext = true,
                                         userData = userData,
-                                        onClick = { /* dettagli evento */ }
+                                        onClick = {
+                                            if (isUserLoggedIn) {
+                                                selectedEventoId = evento.id
+                                                showEventDetail = true
+                                            } else {
+                                                showLoginAlert = true
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -172,7 +187,14 @@ fun WishlistScreen() {
                                         wishlistViewModel = wishlistViewModel,
                                         isInWishlistContext = true,
                                         userData = userData,
-                                        onClick = { /* dettagli evento */ }
+                                        onClick = {
+                                            if (isUserLoggedIn) {
+                                                selectedEventoId = evento.id
+                                                showEventDetail = true
+                                            } else {
+                                                showLoginAlert = true
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -202,6 +224,23 @@ fun WishlistScreen() {
             ) {
                 LoadingIndicator()
             }
+        }
+
+        // Event Detail Overlay - AGGIUNTO COME NELLA HOME
+        if (showEventDetail && selectedEventoId != null && isUserLoggedIn) {
+            EventDetailScreen(
+                eventoId = selectedEventoId!!,
+                onBackPressed = {
+                    showEventDetail = false
+                    selectedEventoId = null
+                },
+                wishlistViewModel = wishlistViewModel
+            )
+        }
+        if (showLoginAlert) {
+            LoginRequiredAlert(
+                onDismiss = { showLoginAlert = false }
+            )
         }
     }
 }

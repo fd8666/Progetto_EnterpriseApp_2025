@@ -43,6 +43,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eventra.R
 import com.example.eventra.Visibilita
+import com.example.eventra.untils.SessionManager
 import com.example.eventra.viewmodels.EventiViewModel
 import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.TagCategoriaViewModel
@@ -54,7 +55,6 @@ import kotlinx.coroutines.delay
 // Colori
 object EventraColors {
     val PrimaryOrange = Color(0xFFFF5722) // Arancione principale
-    val SecondaryOrange = Color(0xFFFF7043) // Arancione più chiaro
     val DarkOrange = Color(0xFFE64A19) // Arancione scuro
     val LightOrange = Color(0xFFFFAB91) // Arancione molto chiaro
     val BackgroundGray = Color(0xFFF5F5F5) // Grigio chiaro di sfondo
@@ -70,7 +70,14 @@ object EventraColors {
 fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     val context = LocalContext.current
 
+    val sessionManager = remember { SessionManager(context) }
+    val isUserLoggedIn = remember { sessionManager.isLoggedIn() }
+
+    var showLoginAlert by remember { mutableStateOf(false) }
+
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
+    var selectedEventoId by remember { mutableStateOf<Long?>(null) }
+    var showEventDetail by remember { mutableStateOf(false) }
 
     val eventiViewModel: EventiViewModel = viewModel {
         EventiViewModel(context.applicationContext as android.app.Application)
@@ -83,7 +90,6 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         TagCategoriaViewModel(context.applicationContext as android.app.Application)
     }
 
-    // AGGIUNGI QUESTO
     val wishlistViewModel: WishlistViewModel = viewModel {
         WishlistViewModel(context.applicationContext as android.app.Application)
     }
@@ -121,7 +127,6 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 EventraHeader()
             }
 
-
             item {
                 if (!categorie.isNullOrEmpty()) {
                     CategorieEventraOneSection(
@@ -136,18 +141,24 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 }
             }
 
-
             item {
                 if (eventiFiltrati.isNotEmpty()) {
-                    EventiInEvidenzaCarousel(eventi = eventiFiltrati)
+                    EventiInEvidenzaCarousel(
+                        eventi = eventiFiltrati,
+                        onEventClick = { eventoId ->
+                            if (isUserLoggedIn) {
+                                selectedEventoId = eventoId
+                                showEventDetail = true
+                            } else {
+                                showLoginAlert = true}
+                        }
+                    )
                 }
             }
-
 
             item {
                 SectionHeader(title = "Tutti gli Eventi", eventiCount = eventiFiltrati.size)
             }
-
 
             item {
                 if (eventiFiltrati.isNotEmpty()) {
@@ -166,7 +177,13 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                                 evento = evento,
                                 wishlistViewModel = wishlistViewModel,
                                 userData = userData,
-                                onClick = { /* dettagli evento */ }
+                                onClick = {
+                                    if (isUserLoggedIn) {
+                                        selectedEventoId = evento.id
+                                        showEventDetail = true
+                                    } else {
+                                        showLoginAlert = true}
+                                }
                             )
                         }
                     }
@@ -193,6 +210,23 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             ) {
                 LoadingIndicator()
             }
+        }
+
+        // Event Detail Overlay - QUESTO DEVE ESSERE FUORI DAL LOADING
+        if (showEventDetail && selectedEventoId != null && isUserLoggedIn) {
+            EventDetailScreen(
+                eventoId = selectedEventoId!!,
+                onBackPressed = {
+                    showEventDetail = false
+                    selectedEventoId = null
+                },
+                wishlistViewModel = wishlistViewModel
+            )
+        }
+        if (showLoginAlert) {
+            LoginRequiredAlert(
+                onDismiss = { showLoginAlert = false }
+            )
         }
     }
 }
@@ -249,10 +283,13 @@ fun EventraHeader() {
         }
     }
 }
-@Composable
-fun EventiInEvidenzaCarousel(eventi: List<EventoData>) {
-    var currentIndex by remember { mutableStateOf(0) }
 
+@Composable
+fun EventiInEvidenzaCarousel(
+    eventi: List<EventoData>,
+    onEventClick: (Long) -> Unit
+) {
+    var currentIndex by remember { mutableStateOf(0) }
 
     val eventiInEvidenza = remember(eventi) {
         if (eventi.size >= 3) {
@@ -262,16 +299,13 @@ fun EventiInEvidenzaCarousel(eventi: List<EventoData>) {
         }
     }
 
-
     val scrollState = rememberLazyListState()
-
 
     LaunchedEffect(eventiInEvidenza) {
         if (eventiInEvidenza.isNotEmpty()) {
             while (true) {
                 delay(5000) // 5 secondi
                 currentIndex = (currentIndex + 1) % eventiInEvidenza.size
-
 
                 scrollState.animateScrollToItem(
                     index = currentIndex,
@@ -333,14 +367,13 @@ fun EventiInEvidenzaCarousel(eventi: List<EventoData>) {
                     EventoInEvidenzaCard(
                         evento = evento,
                         isHighlighted = isCurrentEvent,
-                        onClick = { /* dettagli evento */ }
+                        onClick = { onEventClick(evento.id) }
                     )
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun EventoInEvidenzaCard(
@@ -405,7 +438,6 @@ fun EventoInEvidenzaCard(
                 }
             }
 
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -419,7 +451,6 @@ fun EventoInEvidenzaCard(
                         shape = RoundedCornerShape(16.dp)
                     )
             )
-
 
             Column(
                 modifier = Modifier
@@ -576,7 +607,6 @@ fun SectionHeader(title: String, eventiCount: Int) {
         }
     }
 }
-
 
 @Composable
 fun EventraEventCard(
@@ -806,7 +836,6 @@ fun EventraEventCard(
     }
 }
 
-
 @Composable
 fun EventEmptyState(message: String) {
     Card(
@@ -883,6 +912,50 @@ fun getCategorieIcone(categoryName: String): ImageVector {
         else -> Icons.Default.Category
     }
 }
-
-
-
+@Composable
+fun LoginRequiredAlert(
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Login,
+                    contentDescription = null,
+                    tint = EventraColors.PrimaryOrange
+                )
+                Text(
+                    text = "Accesso Richiesto",
+                    fontWeight = FontWeight.Bold,
+                    color = EventraColors.TextDark
+                )
+            }
+        },
+        text = {
+            Text(
+                text = "Per visualizzare i dettagli degli eventi è necessario effettuare l'accesso o registrarsi.\n\nVai alla sezione Profilo per accedere o creare un account.",
+                color = EventraColors.TextDark,
+                lineHeight = 20.sp
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = EventraColors.PrimaryOrange
+                )
+            ) {
+                Text(
+                    text = "Ho Capito",
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        containerColor = EventraColors.CardWhite,
+        shape = RoundedCornerShape(16.dp)
+    )
+}

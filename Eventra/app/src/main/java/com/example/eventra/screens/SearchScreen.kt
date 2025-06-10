@@ -47,9 +47,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eventra.R
+import com.example.eventra.Visibilita
+import com.example.eventra.untils.SessionManager
 import com.example.eventra.viewmodels.EventiViewModel
 import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.TagCategoriaViewModel
+import com.example.eventra.viewmodels.WishlistViewModel
 import com.example.eventra.viewmodels.data.EventoData
 import com.example.eventra.viewmodels.data.TagCategoriaData
 import kotlinx.coroutines.delay
@@ -75,7 +78,12 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // ViewModels
+    val sessionManager = remember { SessionManager(context) }
+    val isUserLoggedIn = remember { sessionManager.isLoggedIn() }
+
+    var showLoginAlert by remember { mutableStateOf(false) }
+
+
     val eventiViewModel: EventiViewModel = viewModel {
         EventiViewModel(context.applicationContext as android.app.Application)
     }
@@ -85,7 +93,7 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(context.applicationContext as android.app.Application) }
     val userData by profileViewModel.userData.collectAsState()
 
-    // Stati
+
     val eventi by eventiViewModel.eventi.collectAsState()
     val eventiByCategoria by eventiViewModel.eventiByCategoria.collectAsState()
     val categorie by categoriaViewModel.categorie.collectAsState()
@@ -101,12 +109,18 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     var isSearchActive by remember { mutableStateOf(false) }
     var currentSearchType by remember { mutableStateOf(SearchType.ALL) }
 
-    // Carica categorie all'avvio
+    var selectedEventoId by remember { mutableStateOf<Long?>(null) }
+    var showEventDetail by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         categoriaViewModel.getAllCategorie()
+
+    }
+    val wishlistViewModel: WishlistViewModel = viewModel {
+        WishlistViewModel(context.applicationContext as android.app.Application)
     }
 
-    // Funzione per determinare il tipo di ricerca in base ai filtri attivi
+
     fun determineSearchType(): SearchType {
         val hasName = searchText.isNotBlank()
         val hasLocation = searchLocation.isNotBlank()
@@ -116,7 +130,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         val hasBothDates = hasStartDate && hasEndDate
         val hasOnlyStartDate = hasStartDate && !hasEndDate
 
-        // Calcola il numero di filtri attivi
         val activeFiltersCount = listOf(hasName, hasLocation, hasCategory, hasBothDates || hasOnlyStartDate).count { it }
 
         return when {
@@ -131,7 +144,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         }
     }
 
-    // Funzione di ricerca ottimizzata
     fun performSearch() {
         keyboardController?.hide()
 
@@ -169,7 +181,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             }
 
             SearchType.COMBINED -> {
-                // Per ricerche complesse, usa il metodo combinato esistente
                 eventiViewModel.searchEventiCombined(
                     nome = if (searchText.isNotBlank()) searchText.trim() else null,
                     luogo = if (searchLocation.isNotBlank()) searchLocation.trim() else null,
@@ -183,7 +194,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         isSearchActive = true
     }
 
-    // Funzione per ottenere la lista eventi corretta in base al tipo di ricerca
     fun getCurrentEventi(): List<EventoData>? {
         return when (currentSearchType) {
             SearchType.BY_CATEGORY -> eventiByCategoria
@@ -191,7 +201,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         }
     }
 
-    // Funzione per pulire i filtri
     fun clearAllFilters() {
         searchText = ""
         searchLocation = ""
@@ -227,7 +236,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 )
             }
 
-            // Toggle filtri
             item {
                 FiltersToggle(
                     showFilters = showFilters,
@@ -240,7 +248,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 )
             }
 
-            // Sezione filtri (animata)
             item {
                 AnimatedVisibility(
                     visible = showFilters,
@@ -261,7 +268,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 }
             }
 
-            // Chip indicatore tipo di ricerca
             if (isSearchActive) {
                 item {
                     SearchTypeIndicator(
@@ -276,7 +282,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 }
             }
 
-            // Risultati di ricerca
             if (isSearchActive) {
                 val currentEvents = getCurrentEventi()
 
@@ -304,7 +309,15 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                                 EventraEventCard(
                                     evento = evento,
                                     userData = userData,
-                                    onClick = { /* dettagli evento */ }
+                                    wishlistViewModel = wishlistViewModel,
+                                    onClick = {
+                                        if (isUserLoggedIn) {
+                                            selectedEventoId = evento.id
+                                            showEventDetail = true
+                                        } else {
+                                            showLoginAlert = true
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -314,15 +327,12 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                         NoResultsCard(
                             searchType = currentSearchType,
                             onSuggestAction = {
-                                // Suggerisci di ampliare la ricerca
                                 when (currentSearchType) {
                                     SearchType.BY_DATE_RANGE -> {
-                                        // Suggerisci di cercare solo dopo la data di inizio
                                         endDate = null
                                         performSearch()
                                     }
                                     SearchType.BY_DATE_AFTER, SearchType.BY_NAME, SearchType.BY_LOCATION -> {
-                                        // Suggerisci di cercare tutti gli eventi
                                         clearAllFilters()
                                         eventiViewModel.getAllEventi()
                                         isSearchActive = true
@@ -368,7 +378,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             }
         }
 
-        // Loading overlay
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -376,6 +385,23 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             ) {
                 LoadingIndicator()
             }
+        }
+
+        // Event Detail Overlay
+        if (showEventDetail && selectedEventoId != null && isUserLoggedIn) {
+            EventDetailScreen(
+                eventoId = selectedEventoId!!,
+                onBackPressed = {
+                    showEventDetail = false
+                    selectedEventoId = null
+                },
+                wishlistViewModel = wishlistViewModel
+            )
+        }
+        if (showLoginAlert) {
+            LoginRequiredAlert(
+                onDismiss = { showLoginAlert = false }
+            )
         }
     }
 }
@@ -543,7 +569,7 @@ fun SearchSection(
                 color = EventraColors.TextDark
             )
 
-            // Campo ricerca nome evento
+
             SearchTextField(
                 value = searchText,
                 onValueChange = onSearchTextChange,
@@ -552,7 +578,7 @@ fun SearchSection(
                 onSearch = onSearch
             )
 
-            // Campo ricerca località
+
             SearchTextField(
                 value = searchLocation,
                 onValueChange = onSearchLocationChange,
@@ -561,7 +587,7 @@ fun SearchSection(
                 onSearch = onSearch
             )
 
-            // Pulsante cerca
+
             Button(
                 onClick = onSearch,
                 modifier = Modifier
@@ -731,7 +757,7 @@ fun FiltersSection(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Sezione categorie
+
             if (categorie.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -749,7 +775,7 @@ fun FiltersSection(
                 }
             }
 
-            // Sezione date
+
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "Periodo",
@@ -778,7 +804,7 @@ fun FiltersSection(
                 }
             }
 
-            // Bottoni azione
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -819,7 +845,7 @@ fun CategoryFilterSection(
     selectedCategoryId: Long?,
     onCategorySelected: (Long?) -> Unit
 ) {
-    // Aggiungi opzione "Tutte le categorie"
+
     val allCategories = listOf(
         TagCategoriaData(id = -1, nome = "Tutte", descrizione = null)
     ) + categorie
@@ -845,7 +871,6 @@ fun CategoryFilterSection(
         }
     }
 }
-
 @Composable
 fun FilterCategoryChip(
     categoria: TagCategoriaData,
@@ -1034,7 +1059,7 @@ fun NoResultsCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Pulsante suggerimento
+
             Button(
                 onClick = onSuggestAction,
                 colors = ButtonDefaults.buttonColors(
@@ -1114,7 +1139,7 @@ fun SearchPlaceholderCard(
     }
 }
 
-// Funzioni di utilità
+
 fun getSearchTypeDescription(searchType: SearchType): String {
     return when (searchType) {
         SearchType.ALL -> "Ricerca generale"

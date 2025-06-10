@@ -119,7 +119,6 @@ fun LoginScreen(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         EventraColors.PrimaryOrange,
-                        EventraColors.SecondaryOrange,
                         EventraColors.DarkOrange
                     )
                 )

@@ -1,11 +1,12 @@
 <resources>
     <string name="app_name">Eventra</string>
-    <string name="server">http://10.0.2.2:8080</string>  <!-- Cambiato da localhost -->
+    <string name="server">http://10.0.2.2:8080</string>
     <string name="http_error">Errore di connessione al server</string>
     <string name="network_error">Errore di rete. Verifica la connessione internet.</string>
     <string name="end_of_stream_error">Errore nella lettura dei dati</string>
     <string name="unexpected_error">Errore imprevisto. Riprova più tardi.</string>
     <string name="web_client_id">IL_TUO_GOOGLE_CLIENT_ID</string>
+
     <!-- Nav -->
     <string name="nav_home">Home</string>
     <string name="nav_search">Cerca</string>
@@ -32,7 +33,7 @@
     <string name="search_searching">Ricerca in corso…</string>
     <string name="search_results_for">Risultati per:</string>
     <string name="search_placeholder_title">Inizia la tua ricerca!</string>
-    <string name="search_placeholder_subtitle">Usa la barra di ricerca o i filtri per trovare l\'evento perfetto per te</string>
+    <string name="search_placeholder_subtitle">Usa la barra di ricerca o i filtri per trovare l evento perfetto per te</string>
 
     <!-- General -->
     <string name="loading">Caricamento…</string>
@@ -63,7 +64,7 @@
     <string name="datetime_format">dd/MM/yyyy HH:mm</string>
     <string name="time_format">HH:mm</string>
 
-    <!-- Categories (SOLO QUESTE 3) -->
+    <!-- Categories -->
     <string name="category_concerti">Concerti</string>
     <string name="category_sport">Sport</string>
     <string name="category_intrattenimento">Intrattenimento</string>
@@ -85,10 +86,22 @@
     <string name="content_description_location">Posizione</string>
     <string name="content_description_category">Categoria</string>
 
-
     <string name="error_network_timeout">Timeout di rete</string>
     <string name="error_no_data">Nessun dato disponibile</string>
     <string name="error_parsing">Errore nel parsing dei dati</string>
     <string name="error_unknown">Errore sconosciuto</string>
 
+    <!-- EventDetailScreen -->
+    <string name="error_loading_event">Errore nel caricamento</string>
+    <string name="error_loading_event_subtitle">Non è stato possibile caricare i dettagli dell evento</string>
+    <string name="retry_back">Torna Indietro</string>
+
+    <string name="descrizione_title">Descrizione</string>
+    <string name="informazioni_aggiuntive_title">Informazioni Aggiuntive</string>
+    <string name="id_evento_title">ID Evento</string>
+    <string name="categoria_title">Categoria</string>
+
+    <string name="back">Indietro</string>
+    <string name="add_to_favorites">Aggiungi ai preferiti</string>
+    <string name="remove_from_favorites">Rimuovi dai preferiti</string>
 </resources>

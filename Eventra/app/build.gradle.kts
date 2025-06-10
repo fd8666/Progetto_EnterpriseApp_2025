@@ -83,6 +83,7 @@ dependencies {
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.preference.ktx)
     kapt("androidx.room:room-compiler:2.6.1")
 
 
@@ -96,6 +97,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
 
     implementation ("com.google.code.gson:gson:2.10.1")
+
+    //mappa
+    implementation ("org.osmdroid:osmdroid-android:6.1.18")
+    implementation ("org.osmdroid:osmdroid-wms:6.1.18")
+    implementation ("org.osmdroid:osmdroid-mapsforge:6.1.18")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
