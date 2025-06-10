@@ -4,7 +4,7 @@ import com.example.eventra.Visibilita
 
 data class WishlistData(
     val id: Long,
-    val utenteId: Long = 1,
+    val utenteId: Long,
     val visibilita: Visibilita,
     val dataCreazione: String,
     val eventi: List<Long>

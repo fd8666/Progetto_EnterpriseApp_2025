@@ -44,6 +44,7 @@ import coil.request.ImageRequest
 import com.example.eventra.R
 import com.example.eventra.Visibilita
 import com.example.eventra.viewmodels.EventiViewModel
+import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.TagCategoriaViewModel
 import com.example.eventra.viewmodels.WishlistViewModel
 import com.example.eventra.viewmodels.data.EventoData
@@ -66,7 +67,7 @@ object EventraColors {
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     val context = LocalContext.current
 
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
@@ -74,6 +75,9 @@ fun HomeScreen() {
     val eventiViewModel: EventiViewModel = viewModel {
         EventiViewModel(context.applicationContext as android.app.Application)
     }
+
+    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(context.applicationContext as android.app.Application) }
+    val userData by profileViewModel.userData.collectAsState()
 
     val categoriaViewModel: TagCategoriaViewModel = viewModel {
         TagCategoriaViewModel(context.applicationContext as android.app.Application)
@@ -92,7 +96,7 @@ fun HomeScreen() {
     LaunchedEffect(Unit) {
         eventiViewModel.getAllEventi()
         categoriaViewModel.getAllCategorie()
-        wishlistViewModel.getWishlistsByUtenteAndVisibilita(2L, Visibilita.PRIVATA)
+        wishlistViewModel.getWishlistsByUtenteAndVisibilita(userData?.id ?: -1L, Visibilita.PRIVATA)
     }
 
     val eventiFiltrati = remember(eventi, selectedCategoryId) {
@@ -161,6 +165,7 @@ fun HomeScreen() {
                             EventraEventCard(
                                 evento = evento,
                                 wishlistViewModel = wishlistViewModel,
+                                userData = userData,
                                 onClick = { /* dettagli evento */ }
                             )
                         }
@@ -578,6 +583,7 @@ fun EventraEventCard(
     evento: EventoData,
     modifier: Modifier = Modifier,
     wishlistViewModel: WishlistViewModel? = null,
+    userData :  com.example.eventra.viewmodels.data.UtenteData?,
     onClick: () -> Unit
 ) {
     var isPressed by remember { mutableStateOf(false) }
@@ -591,6 +597,8 @@ fun EventraEventCard(
             wishlist.eventi.contains(evento.id)
         } ?: false
     }
+
+
 
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.98f else 1.0f,
@@ -682,14 +690,16 @@ fun EventraEventCard(
                                     if (isInWishlist) {
                                         // Rimuovi dalla wishlist
                                         viewModel.removeEventoFromWishlist(wishlistId, evento.id) {
-                                            // Ricarica le wishlist dopo la rimozione
-                                            viewModel.getWishlistsByUtenteAndVisibilita(2L, Visibilita.PRIVATA)
+
+                                            viewModel.getWishlistsByUtenteAndVisibilita(
+                                               userData?.id ?: -1L, Visibilita.PRIVATA)
                                         }
                                     } else {
                                         // Aggiungi alla wishlist
                                         viewModel.addEventoToWishlist(wishlistId, evento.id) {
                                             // Ricarica le wishlist dopo l'aggiunta
-                                            viewModel.getWishlistsByUtenteAndVisibilita(2L, Visibilita.PRIVATA)
+                                            viewModel.getWishlistsByUtenteAndVisibilita(
+                                                userData?.id ?: -1L, Visibilita.PRIVATA)
                                         }
                                     }
                                 }

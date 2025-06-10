@@ -362,6 +362,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
             _isLoading.value = false
         }
     }
+
 }
 
 

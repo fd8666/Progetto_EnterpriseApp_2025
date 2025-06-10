@@ -2,6 +2,7 @@ package com.example.eventra.screens
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
+import android.service.autofill.UserData
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -47,6 +48,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eventra.R
 import com.example.eventra.viewmodels.EventiViewModel
+import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.TagCategoriaViewModel
 import com.example.eventra.viewmodels.data.EventoData
 import com.example.eventra.viewmodels.data.TagCategoriaData
@@ -54,7 +56,7 @@ import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
-
+import com.example.eventra.viewmodels.data.UtenteData
 // Enum per i tipi di ricerca
 enum class SearchType {
     ALL,
@@ -69,7 +71,7 @@ enum class SearchType {
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen() {
+fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -80,6 +82,8 @@ fun SearchScreen() {
     val categoriaViewModel: TagCategoriaViewModel = viewModel {
         TagCategoriaViewModel(context.applicationContext as android.app.Application)
     }
+    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(context.applicationContext as android.app.Application) }
+    val userData by profileViewModel.userData.collectAsState()
 
     // Stati
     val eventi by eventiViewModel.eventi.collectAsState()
@@ -299,6 +303,7 @@ fun SearchScreen() {
                             items(currentEvents) { evento ->
                                 EventraEventCard(
                                     evento = evento,
+                                    userData = userData,
                                     onClick = { /* dettagli evento */ }
                                 )
                             }
