@@ -239,7 +239,7 @@ fun EventraLoginHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    painter = painterResource(id = R.drawable.logoeventra),
                     contentDescription = "Logo Eventra",
                     modifier = Modifier.size(60.dp)
                 )

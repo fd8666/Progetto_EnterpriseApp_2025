@@ -1,10 +1,13 @@
 package com.example.eventra.screens
 
+import android.content.res.Configuration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,14 +32,16 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.eventra.Visibilita
+import com.example.eventra.untils.SessionManager
 import com.example.eventra.viewmodels.EventiViewModel
+import com.example.eventra.viewmodels.ProfileViewModel
 import com.example.eventra.viewmodels.StrutturaViewModel
 import com.example.eventra.viewmodels.WishlistViewModel
 import com.example.eventra.viewmodels.data.EventoData
 import com.example.eventra.viewmodels.data.StrutturaInfoUtenteData
 import com.example.eventra.viewmodels.data.StrutturaMapInfoData
-import com.example.eventra.Visibilita
-import org.osmdroid.config.Configuration
+import com.example.eventra.viewmodels.data.UtenteData
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -46,9 +51,12 @@ import org.osmdroid.views.overlay.Marker
 fun EventDetailScreen(
     eventoId: Long,
     onBackPressed: () -> Unit,
+    onNavigateToBiglietto: (Long) -> Unit = {},
     wishlistViewModel: WishlistViewModel? = null
 ) {
     val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val isUserLoggedIn = remember { sessionManager.isLoggedIn() }
 
     val eventiViewModel: EventiViewModel = viewModel {
         EventiViewModel(context.applicationContext as android.app.Application)
@@ -58,14 +66,28 @@ fun EventDetailScreen(
         StrutturaViewModel(context.applicationContext as android.app.Application)
     }
 
+    val profileViewModel: ProfileViewModel = viewModel {
+        ProfileViewModel(context.applicationContext as android.app.Application)
+    }
+
     val eventoDetail by eventiViewModel.eventoDetail.collectAsState()
     val isLoading by eventiViewModel.isLoading.collectAsState()
+    val userData by profileViewModel.userData.collectAsState()
 
-    // Stati per la struttura
+
     val strutturaInfo by strutturaViewModel.strutturaInfo.collectAsState()
     val strutturaMapInfo by strutturaViewModel.strutturaMapInfo.collectAsState()
 
-     var isVisible by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(false) }
+    var showLoginAlert by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(Unit) {
+        if (isUserLoggedIn) {
+            profileViewModel.loadUserProfile()
+        }
+    }
+
 
     LaunchedEffect(eventoId) {
         eventiViewModel.getEventoById(eventoId)
@@ -74,9 +96,18 @@ fun EventDetailScreen(
         isVisible = true
     }
 
+
     LaunchedEffect(strutturaInfo) {
         strutturaInfo?.let { info ->
             strutturaViewModel.getStrutturaMapInfo(info.id)
+        }
+    }
+    LaunchedEffect(userData?.id) {
+        if (isUserLoggedIn && userData?.id != null && wishlistViewModel != null) {
+            wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                userData!!.id,
+                Visibilita.PRIVATA
+            )
         }
     }
 
@@ -98,7 +129,6 @@ fun EventDetailScreen(
                 .zIndex(999f)
         ) {
             if (isLoading) {
-
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -106,7 +136,6 @@ fun EventDetailScreen(
                     LoadingIndicator()
                 }
             } else if (eventoDetail != null) {
-
                 EventDetailContent(
                     evento = eventoDetail!!,
                     strutturaInfo = strutturaInfo,
@@ -118,11 +147,26 @@ fun EventDetailScreen(
                             onBackPressed()
                         }
                     },
-                    wishlistViewModel = wishlistViewModel
+                    onNavigateToBiglietto = { eventoId ->
+                        if (isUserLoggedIn) {
+                            onNavigateToBiglietto(eventoId)
+                        } else {
+                            showLoginAlert = true
+                        }
+                    },
+                    wishlistViewModel = if (isUserLoggedIn) wishlistViewModel else null,
+                    userData = userData,
+                    isUserLoggedIn = isUserLoggedIn
                 )
             } else {
-
                 EventDetailErrorState(onBackPressed = onBackPressed)
+            }
+
+
+            if (showLoginAlert) {
+                LoginRequiredAlert(
+                    onDismiss = { showLoginAlert = false }
+                )
             }
         }
     }
@@ -134,7 +178,10 @@ fun EventDetailContent(
     strutturaInfo: StrutturaInfoUtenteData?,
     strutturaMapInfo: StrutturaMapInfoData?,
     onBackPressed: () -> Unit,
-    wishlistViewModel: WishlistViewModel?
+    onNavigateToBiglietto: (Long) -> Unit = {},
+    wishlistViewModel: WishlistViewModel?,
+    userData: UtenteData?,
+    isUserLoggedIn: Boolean
 ) {
     val scrollState = rememberScrollState()
     val baseUrl = "http://10.0.2.2:8080/images/"
@@ -145,13 +192,20 @@ fun EventDetailContent(
             else "$baseUrl${evento.immagine}"
         } else null
     }
-
-    val wishlistsByVisibilita by wishlistViewModel?.wishlistsByVisibilita?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
+    val wishlistsByVisibilita by if (wishlistViewModel != null) {
+        wishlistViewModel.wishlistsByVisibilita.collectAsState()
+    } else {
+        remember { mutableStateOf(emptyList()) }
+    }
 
     val isInWishlist = remember(wishlistsByVisibilita, evento.id) {
-        wishlistsByVisibilita?.any { wishlist ->
-            wishlist.eventi.contains(evento.id)
-        } ?: false
+        if (isUserLoggedIn) {
+            wishlistsByVisibilita?.any { wishlist ->
+                wishlist.eventi.contains(evento.id)
+            } ?: false
+        } else {
+            false
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -160,35 +214,42 @@ fun EventDetailContent(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
         ) {
-
             EventDetailHeader(
                 imageUrl = imageUrl,
                 eventoNome = evento.nome ?: "Evento",
                 onBackPressed = onBackPressed,
                 isInWishlist = isInWishlist,
+                showWishlistButton = isUserLoggedIn,
                 onWishlistToggle = {
-                    wishlistViewModel?.let { viewModel ->
-                        val wishlistId = viewModel.getFirstPrivateWishlistId()
-                        if (wishlistId != null) {
-                            if (isInWishlist) {
-                                viewModel.removeEventoFromWishlist(wishlistId, evento.id) {
-                                    viewModel.getWishlistsByUtenteAndVisibilita(2L, Visibilita.PRIVATA)
-                                }
-                            } else {
-                                viewModel.addEventoToWishlist(wishlistId, evento.id) {
-                                    viewModel.getWishlistsByUtenteAndVisibilita(2L, Visibilita.PRIVATA)
+                    if (isUserLoggedIn && wishlistViewModel != null && userData != null) {
+                        wishlistViewModel.getFirstPrivateWishlistId(userData.id) { wishlistId ->
+                            if (wishlistId != null) {
+                                if (isInWishlist) {
+                                    wishlistViewModel.removeEventoFromWishlist(wishlistId, evento.id) {
+                                        wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                                            userData.id,
+                                            Visibilita.PRIVATA
+                                        )
+                                    }
+                                } else {
+                                    wishlistViewModel.addEventoToWishlist(wishlistId, evento.id) {
+                                        wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                                            userData.id,
+                                            Visibilita.PRIVATA
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             )
-
-            // Contenuto principale
             EventDetailMainContent(
                 evento = evento,
                 strutturaInfo = strutturaInfo,
-                strutturaMapInfo = strutturaMapInfo
+                strutturaMapInfo = strutturaMapInfo,
+                onNavigateToBiglietto = onNavigateToBiglietto,
+                isUserLoggedIn = isUserLoggedIn
             )
         }
     }
@@ -200,6 +261,7 @@ fun EventDetailHeader(
     eventoNome: String,
     onBackPressed: () -> Unit,
     isInWishlist: Boolean,
+    showWishlistButton: Boolean,
     onWishlistToggle: () -> Unit
 ) {
     Box(
@@ -207,7 +269,6 @@ fun EventDetailHeader(
             .fillMaxWidth()
             .height(300.dp)
     ) {
-//immagine evento
         if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -233,7 +294,6 @@ fun EventDetailHeader(
                 )
             }
         }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -246,7 +306,6 @@ fun EventDetailHeader(
                     )
                 )
         )
-
         IconButton(
             onClick = onBackPressed,
             modifier = Modifier
@@ -264,7 +323,270 @@ fun EventDetailHeader(
                 tint = EventraColors.TextDark
             )
         }
+        if (showWishlistButton) {
+            IconButton(
+                onClick = onWishlistToggle,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(
+                        Color.White.copy(alpha = 0.9f),
+                        shape = CircleShape
+                    )
+                    .size(48.dp)
+            ) {
+                Icon(
+                    imageVector = if (isInWishlist) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = if (isInWishlist) "Rimuovi dai preferiti" else "Aggiungi ai preferiti",
+                    tint = if (isInWishlist) EventraColors.PrimaryOrange else EventraColors.TextGray
+                )
+            }
+        }
+        Text(
+            text = eventoNome,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(20.dp),
+            lineHeight = 32.sp
+        )
+    }
+}
 
+@Composable
+fun EventDetailMainContent(
+    evento: EventoData,
+    onNavigateToBiglietto: (Long) -> Unit = {},
+    strutturaInfo: StrutturaInfoUtenteData?,
+    strutturaMapInfo: StrutturaMapInfoData?,
+    isUserLoggedIn: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        if (isUserLoggedIn) {
+            EventPurchaseButton(
+                onPurchaseClick = {
+                    onNavigateToBiglietto(evento.id)
+                }
+            )
+        } else {
+            EventPurchaseButtonNotLoggedIn()
+        }
+        EventDetailInfoCard(evento = evento)
+        if (!evento.descrizione.isNullOrBlank()) {
+            EventDetailDescriptionCard(descrizione = evento.descrizione)
+        }
+        StrutturaInfoCard(strutturaInfo = strutturaInfo)
+        StrutturaMapOnlyCard(
+            strutturaInfo = strutturaInfo,
+            mapInfo = strutturaMapInfo
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+fun EventPurchaseButtonNotLoggedIn(
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = null,
+                    tint = EventraColors.TextGray,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = "Acquista Biglietto",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EventraColors.TextDark
+                )
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Login,
+                    contentDescription = null,
+                    tint = EventraColors.TextGray,
+                    modifier = Modifier.size(48.dp)
+                )
+
+                Text(
+                    text = "Accesso Richiesto",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EventraColors.TextDark,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "Per acquistare i biglietti è necessario effettuare l'accesso.\nVai alla sezione Profilo per accedere o creare un account.",
+                    fontSize = 14.sp,
+                    color = EventraColors.TextGray,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EventDetailErrorState(onBackPressed: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = null,
+                    tint = EventraColors.TextGray,
+                    modifier = Modifier.size(64.dp)
+                )
+
+                Text(
+                    text = "Errore nel caricamento",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = EventraColors.TextDark,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "Non è stato possibile caricare i dettagli dell'evento",
+                    fontSize = 14.sp,
+                    color = EventraColors.TextGray,
+                    textAlign = TextAlign.Center
+                )
+
+                Button(
+                    onClick = onBackPressed,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EventraColors.PrimaryOrange
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Torna Indietro",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun EventDetailHeader(
+    imageUrl: String?,
+    eventoNome: String,
+    onBackPressed: () -> Unit,
+    isInWishlist: Boolean,
+    onWishlistToggle: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+    ) {
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = eventoNome,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(EventraColors.DividerGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Event,
+                    contentDescription = null,
+                    tint = EventraColors.TextGray,
+                    modifier = Modifier.size(80.dp)
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.3f),
+                            Color.Black.copy(alpha = 0.7f)
+                        )
+                    )
+                )
+        )
+        IconButton(
+            onClick = onBackPressed,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+                .background(
+                    Color.White.copy(alpha = 0.9f),
+                    shape = CircleShape
+                )
+                .size(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Indietro",
+                tint = EventraColors.TextDark
+            )
+        }
         IconButton(
             onClick = onWishlistToggle,
             modifier = Modifier
@@ -282,7 +604,6 @@ fun EventDetailHeader(
                 tint = if (isInWishlist) EventraColors.PrimaryOrange else EventraColors.TextGray
             )
         }
-
         Text(
             text = eventoNome,
             fontSize = 28.sp,
@@ -299,6 +620,7 @@ fun EventDetailHeader(
 @Composable
 fun EventDetailMainContent(
     evento: EventoData,
+    onNavigateToBiglietto: (Long) -> Unit = {},
     strutturaInfo: StrutturaInfoUtenteData?,
     strutturaMapInfo: StrutturaMapInfoData?
 ) {
@@ -310,18 +632,14 @@ fun EventDetailMainContent(
     ) {
         EventPurchaseButton(
             onPurchaseClick = {
-                // TODO: Implementare logica di acquisto dai mirkooooooooooooooo
+                onNavigateToBiglietto(evento.id)  // ECCO COSA METTERE QUI
             }
         )
-
         EventDetailInfoCard(evento = evento)
-
         if (!evento.descrizione.isNullOrBlank()) {
             EventDetailDescriptionCard(descrizione = evento.descrizione)
         }
-
         StrutturaInfoCard(strutturaInfo = strutturaInfo)
-
         StrutturaMapOnlyCard(
             strutturaInfo = strutturaInfo,
             mapInfo = strutturaMapInfo
@@ -348,7 +666,6 @@ fun EventPurchaseButton(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -400,7 +717,6 @@ fun EventPurchaseButton(
                 }
             }
 
-
             Text(
                 text = "Clicca per procedere all'acquisto del biglietto",
                 fontSize = 14.sp,
@@ -424,7 +740,6 @@ fun EventDetailInfoCard(evento: EventoData) {
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             EventDetailInfoRow(
                 icon = Icons.Default.CalendarToday,
                 title = "Data e Ora",
@@ -568,7 +883,15 @@ fun StrutturaInfoCard(
                     color = EventraColors.TextGray
                 )
             } else {
-                CircularProgressIndicator(color = EventraColors.PrimaryOrange)
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = EventraColors.PrimaryOrange,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -611,13 +934,16 @@ fun StrutturaMapOnlyCard(
             }
 
             if (strutturaInfo != null && mapInfo != null) {
-                // Spazio dedicato solo alla mappa
                 AndroidView(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp),
+                        .height(200.dp)
+                        .background(
+                            EventraColors.DividerGray,
+                            RoundedCornerShape(12.dp)
+                        ),
                     factory = { ctx ->
-                        Configuration.getInstance().load(
+                         org.osmdroid.config.Configuration.getInstance().load(
                             ctx.applicationContext,
                             androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx.applicationContext)
                         )
@@ -659,112 +985,21 @@ fun StrutturaMapOnlyCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp),
+                        .height(200.dp)
+                        .background(
+                            EventraColors.DividerGray,
+                            RoundedCornerShape(12.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = EventraColors.PrimaryOrange)
+                    CircularProgressIndicator(
+                        color = EventraColors.PrimaryOrange,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
     }
+
 }
 
-@Composable
-fun OpenStreetMapView(
-    latitude: Double,
-    longitude: Double,
-    strutturaNome: String,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-
-    AndroidView(
-        modifier = modifier,
-        factory = { ctx ->
-
-            Configuration.getInstance().load(
-                ctx.applicationContext,
-                androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx.applicationContext)
-            )
-
-            MapView(ctx).apply {
-                setTileSource(TileSourceFactory.MAPNIK)
-                setMultiTouchControls(true)
-
-
-                val mapController = controller
-                mapController.setZoom(15.0)
-                val startPoint = GeoPoint(latitude, longitude)
-                mapController.setCenter(startPoint)
-
-
-                val marker = Marker(this)
-                marker.position = startPoint
-                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                marker.title = strutturaNome
-
-                overlays.add(marker)
-            }
-        },
-        update = { mapView ->
-
-            val newPoint = GeoPoint(latitude, longitude)
-            mapView.controller.setCenter(newPoint)
-
-            mapView.overlays.clear()
-            val marker = Marker(mapView)
-            marker.position = newPoint
-            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            marker.title = strutturaNome
-            mapView.overlays.add(marker)
-            mapView.invalidate()
-        }
-    )
-}
-
-@Composable
-fun EventDetailErrorState(onBackPressed: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Error,
-                contentDescription = null,
-                tint = EventraColors.TextGray,
-                modifier = Modifier.size(64.dp)
-            )
-
-            Text(
-                text = "Errore nel caricamento",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                color = EventraColors.TextDark,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = "Non è stato possibile caricare i dettagli dell'evento",
-                fontSize = 14.sp,
-                color = EventraColors.TextGray,
-                textAlign = TextAlign.Center
-            )
-
-            Button(
-                onClick = onBackPressed,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = EventraColors.PrimaryOrange
-                )
-            ) {
-                Text(
-                    text = "Torna Indietro",
-                    color = Color.White
-                )
-            }
-        }
-    }
-}

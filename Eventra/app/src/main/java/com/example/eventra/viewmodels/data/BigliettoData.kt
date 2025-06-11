@@ -8,14 +8,7 @@ data class BigliettoData(
     val eventoId: Long,
     val tipoPostoId: Long,
     val pagamentoId: Long? = null,
-    val isExpanded: Boolean = true // Solo per UI
+    val isExpanded: Boolean = true,
+    val dataCreazione: String
 )
 
-data class BigliettoRequest(
-    val nomeSpettatore: String,
-    val cognomeSpettatore: String,
-    val emailSpettatore: String,
-    val eventoId: Long,
-    val TipoPostoId: Long,
-    val pagamentoId: Long
-)

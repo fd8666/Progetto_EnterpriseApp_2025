@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -28,10 +29,10 @@ import com.example.eventra.screens.*
 import com.example.eventra.ui.theme.EventraTheme
 import com.example.eventra.viewmodels.EventiViewModel
 import com.example.eventra.viewmodels.LoginViewModel
+import com.example.eventra.viewmodels.WishlistViewModel
 import com.example.eventra.untils.SessionManager
 import com.example.eventra.viewmodels.data.BigliettoData
 
-// Enum per la navigazione
 enum class Screen {
     HOME,
     SEARCH,
@@ -40,8 +41,15 @@ enum class Screen {
     LOGIN,
     BIGLIETTO,
     PAGAMENTO,
-    PAYMENT_SUCCESS
+    PAYMENT_SUCCESS,
+    EVENT_DETAIL
 }
+
+data class ScreenState(
+    val screen: Screen,
+    val eventoId: Long? = null,
+    val biglietti: List<BigliettoData>? = null
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,81 +81,111 @@ fun HomePage() {
         EventiViewModel(context.applicationContext as Application)
     }
 
-    val selectedIndex = remember { mutableIntStateOf(0) }
-    var isUserLoggedIn by remember { mutableStateOf(sessionManager.isLoggedIn()) }
-    var currentScreen by remember { mutableStateOf(Screen.HOME) }
-    var selectedEventoId by remember { mutableLongStateOf(0L) }
-    var bigliettiForPayment by remember { mutableStateOf<List<BigliettoData>>(emptyList()) }
+    val wishlistViewModel: WishlistViewModel = viewModel {
+        WishlistViewModel(context.applicationContext as Application)
+    }
 
-    // Observer per lo stato del login
+    val navigationStack = remember { mutableStateListOf<ScreenState>() }
+    var currentBottomBarIndex by remember { mutableIntStateOf(0) }
+    var isUserLoggedIn by remember { mutableStateOf(sessionManager.isLoggedIn()) }
+
+    LaunchedEffect(Unit) {
+        if (navigationStack.isEmpty()) {
+            navigationStack.add(ScreenState(Screen.HOME))
+        }
+    }
+
     val loginState by loginViewModel.loginState.collectAsState()
     val eventi by eventiViewModel.eventi.collectAsState()
 
-    // Carica eventi all'avvio
     LaunchedEffect(Unit) {
         eventiViewModel.getAllEventi()
     }
 
+    fun navigateTo(screenState: ScreenState) {
+        navigationStack.add(screenState)
+    }
+
+    fun navigateBack() {
+        if (navigationStack.size > 1) {
+            navigationStack.removeLastOrNull()
+        }
+    }
+
+    fun navigateToHome() {
+        navigationStack.clear()
+        navigationStack.add(ScreenState(Screen.HOME))
+        currentBottomBarIndex = 0
+    }
+    
     LaunchedEffect(loginState) {
         when (loginState) {
             is LoginViewModel.LoginState.Success -> {
                 isUserLoggedIn = true
-                currentScreen = Screen.HOME
-                selectedIndex.intValue = 0
+                navigateToHome()
             }
             else -> {}
         }
     }
+    fun navigateToBottomBarTab(index: Int) {
+        val screen = when (index) {
+            0 -> Screen.HOME
+            1 -> Screen.SEARCH
+            2 -> Screen.WISHLIST
+            3 -> if (isUserLoggedIn) Screen.PROFILE else Screen.LOGIN
+            else -> Screen.HOME
+        }
 
-    // Funzioni di navigazione
-    fun navigateToHome() {
-        currentScreen = Screen.HOME
-        selectedIndex.intValue = 0
+        val currentScreen = navigationStack.lastOrNull()?.screen
+        if (currentScreen in listOf(Screen.HOME, Screen.SEARCH, Screen.WISHLIST, Screen.PROFILE, Screen.LOGIN)) {
+            navigationStack.removeLastOrNull()
+        }
+
+        navigationStack.add(ScreenState(screen))
+        currentBottomBarIndex = index
     }
 
-    fun navigateToBiglietto(eventoId: Long = 1L) {
-        selectedEventoId = eventoId
-        currentScreen = Screen.BIGLIETTO
+    fun navigateToEventDetail(eventoId: Long) {
+        navigateTo(ScreenState(Screen.EVENT_DETAIL, eventoId = eventoId))
+    }
+
+    fun navigateToBiglietto(eventoId: Long) {
+        navigateTo(ScreenState(Screen.BIGLIETTO, eventoId = eventoId))
     }
 
     fun navigateToPayment(biglietti: List<BigliettoData>) {
-        bigliettiForPayment = biglietti
-        currentScreen = Screen.PAGAMENTO
+        navigateTo(ScreenState(Screen.PAGAMENTO, biglietti = biglietti))
     }
 
     fun navigateToPaymentSuccess() {
-        currentScreen = Screen.PAYMENT_SUCCESS
+        navigateTo(ScreenState(Screen.PAYMENT_SUCCESS))
     }
 
-    fun navigateBackFromBiglietto() {
-        currentScreen = Screen.HOME
-        selectedIndex.intValue = 0
-    }
+    val currentScreenState = navigationStack.lastOrNull() ?: ScreenState(Screen.HOME)
+    val currentScreen = currentScreenState.screen
 
-    fun navigateBackFromPayment() {
-        currentScreen = Screen.BIGLIETTO
-    }
-
-    // Mostra/nascondi bottom bar in base allo screen corrente
     val showBottomBar = when (currentScreen) {
         Screen.HOME, Screen.SEARCH, Screen.WISHLIST, Screen.PROFILE, Screen.LOGIN -> true
         else -> false
+    }
+
+    LaunchedEffect(currentScreen) {
+        when (currentScreen) {
+            Screen.HOME -> currentBottomBarIndex = 0
+            Screen.SEARCH -> currentBottomBarIndex = 1
+            Screen.WISHLIST -> currentBottomBarIndex = 2
+            Screen.PROFILE, Screen.LOGIN -> currentBottomBarIndex = 3
+            else -> { }
+        }
     }
 
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 EventraBottomBar(
-                    selectedIndex = selectedIndex,
+                    selectedIndex = currentBottomBarIndex,
                     onTabSelected = { index ->
-                        selectedIndex.intValue = index
-                        currentScreen = when (index) {
-                            0 -> Screen.HOME
-                            1 -> Screen.SEARCH
-                            2 -> Screen.BIGLIETTO
-                            3 -> if (isUserLoggedIn) Screen.PROFILE else Screen.LOGIN
-                            else -> Screen.HOME
-                        }
+                        navigateToBottomBarTab(index)
                     }
                 )
             }
@@ -162,62 +200,91 @@ fun HomePage() {
             when (currentScreen) {
                 Screen.HOME -> {
                     HomeScreen(
-                        onNavigateToBiglietto = { eventoId ->
-                            navigateToBiglietto(eventoId)
+                        onNavigateToEventDetail = { eventoId ->
+                            navigateToEventDetail(eventoId)
                         }
                     )
                 }
+
+                Screen.EVENT_DETAIL -> {
+                    EventDetailScreen(
+                        eventoId = currentScreenState.eventoId ?: 0L,
+                        onBackPressed = {
+                            navigateBack()
+                        },
+                        onNavigateToBiglietto = { eventoId ->
+                            navigateToBiglietto(eventoId)
+                        },
+                        wishlistViewModel = if (isUserLoggedIn) wishlistViewModel else null
+                    )
+                }
+
                 Screen.SEARCH -> {
                     SearchScreen(
                         onNavigateToBiglietto = { eventoId ->
                             navigateToBiglietto(eventoId)
+                        },
+                        onNavigateToEventDetail = { eventoId ->
+                            navigateToEventDetail(eventoId)
                         }
                     )
                 }
+
                 Screen.WISHLIST -> {
-                    WishlistScreen()
+                    WishlistScreen(
+                        onNavigateToEventDetail = { eventoId ->
+                            navigateToEventDetail(eventoId)
+                        }
+                    )
                 }
+
                 Screen.PROFILE -> {
                     ProfileScreen(
                         onLogout = {
                             sessionManager.clearSession()
                             isUserLoggedIn = false
-                            currentScreen = Screen.LOGIN
+                            navigationStack.clear()
+                            navigationStack.add(ScreenState(Screen.LOGIN))
+                            currentBottomBarIndex = 3
                         }
                     )
                 }
+
                 Screen.LOGIN -> {
                     LoginScreen(
                         onLoginSuccess = {
                             isUserLoggedIn = true
-                            currentScreen = Screen.HOME
-                            selectedIndex.intValue = 0
+                            navigateToHome()
                         },
                         viewModel = loginViewModel
                     )
                 }
+
                 Screen.BIGLIETTO -> {
                     BigliettoScreen(
-                        eventoId = selectedEventoId,
-                        onNavigateBack = {
-                            navigateBackFromBiglietto()
+                        eventoId = currentScreenState.eventoId ?: 0L,
+                        onNavigateToEventDetail = {
+
+                            navigateBack()
                         },
                         onNavigateToPayment = { biglietti ->
                             navigateToPayment(biglietti)
                         }
                     )
                 }
+
                 Screen.PAGAMENTO -> {
                     PagamentoScreen(
-                        biglietti = bigliettiForPayment,
+                        biglietti = currentScreenState.biglietti ?: emptyList(),
                         onPaymentSuccess = {
                             navigateToPaymentSuccess()
                         },
                         onBackPressed = {
-                            navigateBackFromPayment()
+                            navigateBack()
                         }
                     )
                 }
+
                 Screen.PAYMENT_SUCCESS -> {
                     PaymentSuccessScreen(
                         onNavigateToHome = {
@@ -232,7 +299,7 @@ fun HomePage() {
 
 @Composable
 fun EventraBottomBar(
-    selectedIndex: MutableState<Int>,
+    selectedIndex: Int,
     onTabSelected: (Int) -> Unit
 ) {
     NavigationBar(
@@ -240,13 +307,12 @@ fun EventraBottomBar(
         contentColor = EventraColors.TextDark,
         tonalElevation = 8.dp
     ) {
-        // Home Tab
         NavigationBarItem(
-            selected = selectedIndex.value == 0,
+            selected = selectedIndex == 0,
             onClick = { onTabSelected(0) },
             icon = {
                 Icon(
-                    imageVector = if (selectedIndex.value == 0) Icons.Filled.Home else Icons.Outlined.Home,
+                    imageVector = if (selectedIndex == 0) Icons.Filled.Home else Icons.Outlined.Home,
                     contentDescription = "Home",
                     modifier = Modifier.size(24.dp)
                 )
@@ -266,13 +332,12 @@ fun EventraBottomBar(
             )
         )
 
-        // Search Tab
         NavigationBarItem(
-            selected = selectedIndex.value == 1,
+            selected = selectedIndex == 1,
             onClick = { onTabSelected(1) },
             icon = {
                 Icon(
-                    imageVector = if (selectedIndex.value == 1) Icons.Filled.Search else Icons.Outlined.Search,
+                    imageVector = if (selectedIndex == 1) Icons.Filled.Search else Icons.Outlined.Search,
                     contentDescription = "Cerca",
                     modifier = Modifier.size(24.dp)
                 )
@@ -292,13 +357,12 @@ fun EventraBottomBar(
             )
         )
 
-        // Wishlist Tab
         NavigationBarItem(
-            selected = selectedIndex.value == 2,
+            selected = selectedIndex == 2,
             onClick = { onTabSelected(2) },
             icon = {
                 Icon(
-                    imageVector = if (selectedIndex.value == 2) Icons.Filled.Favorite else Icons.Outlined.Favorite,
+                    imageVector = if (selectedIndex == 2) Icons.Filled.Favorite else Icons.Outlined.Favorite,
                     contentDescription = "Wishlist",
                     modifier = Modifier.size(24.dp)
                 )
@@ -318,13 +382,12 @@ fun EventraBottomBar(
             )
         )
 
-        // Account Tab
         NavigationBarItem(
-            selected = selectedIndex.value == 3,
+            selected = selectedIndex == 3,
             onClick = { onTabSelected(3) },
             icon = {
                 Icon(
-                    imageVector = if (selectedIndex.value == 3) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
+                    imageVector = if (selectedIndex == 3) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
                     contentDescription = "Account",
                     modifier = Modifier.size(24.dp)
                 )
@@ -346,7 +409,6 @@ fun EventraBottomBar(
     }
 }
 
-// Screen di successo pagamento
 @Composable
 fun PaymentSuccessScreen(
     onNavigateToHome: () -> Unit
@@ -401,4 +463,3 @@ fun PaymentSuccessScreen(
         }
     }
 }
-

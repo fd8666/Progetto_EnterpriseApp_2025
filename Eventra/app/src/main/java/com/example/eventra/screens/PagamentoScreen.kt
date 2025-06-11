@@ -106,9 +106,13 @@ fun PagamentoScreen(
     }
 
     // Caricamento iniziale
-    LaunchedEffect(Unit) {
-        eventiViewModel.getEventoById(1L)
-        tipoPostoViewModel.getTipiPostoByEvento(1L)
+    LaunchedEffect(biglietti) {
+        if (biglietti.isNotEmpty()) {
+            val eventoId = biglietti.first().eventoId
+            eventiViewModel.getEventoById(eventoId)
+            tipoPostoViewModel.getTipiPostoByEvento(eventoId)
+        }
+        profileViewModel.loadUserProfile()
     }
 
     // Gestione successo pagamento
@@ -301,7 +305,7 @@ fun PagamentoHeader(
             if (evento != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = evento.nome.toString(),
+                    text = evento.nome ?: "Evento",
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.9f),
                     textAlign = TextAlign.Center,
@@ -310,6 +314,123 @@ fun PagamentoHeader(
             }
         }
     }
+}
+
+@Composable
+fun PaymentProgressIndicator(
+    currentStep: Int,
+    totalSteps: Int
+) {
+    val steps = listOf("Riepilogo", "Pagamento", "Conferma")
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, stepName ->
+                StepIndicator(
+                    stepNumber = index + 1,
+                    stepName = stepName,
+                    isActive = currentStep == index + 1,
+                    isCompleted = currentStep > index + 1,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (index < steps.size - 1) {
+                    StepConnector(
+                        isCompleted = currentStep > index + 1,
+                        modifier = Modifier.weight(0.5f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StepIndicator(
+    stepNumber: Int,
+    stepName: String,
+    isActive: Boolean,
+    isCompleted: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        // Cerchio con numero o check
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(
+                    color = when {
+                        isCompleted -> EventraColors.PrimaryOrange
+                        isActive -> EventraColors.PrimaryOrange
+                        else -> EventraColors.DividerGray
+                    },
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isCompleted) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Completato",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            } else {
+                Text(
+                    text = stepNumber.toString(),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isActive) Color.White else EventraColors.TextGray
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Nome dello step
+        Text(
+            text = stepName,
+            fontSize = 12.sp,
+            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+            color = when {
+                isCompleted -> EventraColors.PrimaryOrange
+                isActive -> EventraColors.PrimaryOrange
+                else -> EventraColors.TextGray
+            },
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun StepConnector(
+    isCompleted: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(2.dp)
+            .background(
+                color = if (isCompleted) EventraColors.PrimaryOrange else EventraColors.DividerGray,
+                shape = RoundedCornerShape(1.dp)
+            )
+    )
 }
 
 @Composable
@@ -576,11 +697,11 @@ fun DatiPagamentoSection(
                     value = meseScadenza,
                     onValueChange = { newValue ->
                         if (newValue.length <= 2 && newValue.all { it.isDigit() }) {
-                            if (newValue.isEmpty() || (newValue.toIntOrNull() ?: 0) in 1..12) {
-                                onMeseScadenzaChange(newValue)
-                            }
+
+                            onMeseScadenzaChange(newValue)
                         }
-                    },
+                    }
+                    ,
                     label = "Mese",
                     placeholder = "MM",
                     modifier = Modifier.weight(1f),
@@ -1050,123 +1171,6 @@ fun PaymentSuccessSection() {
             }
         }
     }
-}
-
-@Composable
-fun PaymentProgressIndicator(
-    currentStep: Int,
-    totalSteps: Int
-) {
-    val steps = listOf("Riepilogo", "Pagamento", "Conferma")
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            steps.forEachIndexed { index, stepName ->
-                StepIndicator(
-                    stepNumber = index + 1,
-                    stepName = stepName,
-                    isActive = currentStep == index + 1,
-                    isCompleted = currentStep > index + 1,
-                    modifier = Modifier.weight(1f)
-                )
-
-                if (index < steps.size - 1) {
-                    StepConnector(
-                        isCompleted = currentStep > index + 1,
-                        modifier = Modifier.weight(0.5f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun StepIndicator(
-    stepNumber: Int,
-    stepName: String,
-    isActive: Boolean,
-    isCompleted: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        // Cerchio con numero o check
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .background(
-                    color = when {
-                        isCompleted -> EventraColors.PrimaryOrange
-                        isActive -> EventraColors.PrimaryOrange
-                        else -> EventraColors.DividerGray
-                    },
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isCompleted) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Completato",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-            } else {
-                Text(
-                    text = stepNumber.toString(),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isActive) Color.White else EventraColors.TextGray
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Nome dello step
-        Text(
-            text = stepName,
-            fontSize = 12.sp,
-            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-            color = when {
-                isCompleted -> EventraColors.PrimaryOrange
-                isActive -> EventraColors.PrimaryOrange
-                else -> EventraColors.TextGray
-            },
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun StepConnector(
-    isCompleted: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .height(2.dp)
-            .background(
-                color = if (isCompleted) EventraColors.PrimaryOrange else EventraColors.DividerGray,
-                shape = RoundedCornerShape(1.dp)
-            )
-    )
 }
 
 @Composable

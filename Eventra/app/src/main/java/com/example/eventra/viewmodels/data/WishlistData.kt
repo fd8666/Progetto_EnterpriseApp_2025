@@ -7,6 +7,7 @@ data class WishlistData(
     val utenteId: Long,
     val visibilita: Visibilita,
     val dataCreazione: String,
-    val eventi: List<Long>
+    val eventi: List<Long>,
+
 )
 

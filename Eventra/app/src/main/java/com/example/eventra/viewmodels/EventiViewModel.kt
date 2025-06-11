@@ -47,7 +47,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
 
 
 
-    // Funzioni per ottenere eventi
+
     fun getAllEventi() = getEventi("", _eventi, "allEventi")
 
     fun getEventiByCategoria(categoriaId: Long) = getEventi("/categoria/$categoriaId", _eventiByCategoria, "categoria")
@@ -247,7 +247,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Metodo per ricerca combinata
+
     fun searchEventiCombined(
         nome: String? = null,
         luogo: String? = null,
@@ -270,7 +270,7 @@ class EventiViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Metodo che implementa il filtro lato client
+
     private suspend fun getAllEventiAndFilter(
         nome: String?,
         luogo: String?,

@@ -43,6 +43,8 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.preference:preference-ktx:1.2.1")
+    implementation ("org.osmdroid:osmdroid-android:6.1.17")
     // Core Android
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")

@@ -67,50 +67,53 @@ object EventraColors {
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
+fun HomeScreen(
+    onNavigateToEventDetail: (Long) -> Unit = {}
+) {
     val context = LocalContext.current
-
     val sessionManager = remember { SessionManager(context) }
     val isUserLoggedIn = remember { sessionManager.isLoggedIn() }
 
     var showLoginAlert by remember { mutableStateOf(false) }
 
-    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
-    var selectedEventoId by remember { mutableStateOf<Long?>(null) }
-    var showEventDetail by remember { mutableStateOf(false) }
-
     val eventiViewModel: EventiViewModel = viewModel {
         EventiViewModel(context.applicationContext as android.app.Application)
     }
 
-    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(context.applicationContext as android.app.Application) }
-    val userData by profileViewModel.userData.collectAsState()
-
-    val categoriaViewModel: TagCategoriaViewModel = viewModel {
-        TagCategoriaViewModel(context.applicationContext as android.app.Application)
+    val profileViewModel: ProfileViewModel = viewModel {
+        ProfileViewModel(context.applicationContext as android.app.Application)
     }
+    val userData by profileViewModel.userData.collectAsState()
 
     val wishlistViewModel: WishlistViewModel = viewModel {
         WishlistViewModel(context.applicationContext as android.app.Application)
     }
 
     val eventi by eventiViewModel.eventi.collectAsState()
-    val categorie by categoriaViewModel.categorie.collectAsState()
     val isLoadingEventi by eventiViewModel.isLoading.collectAsState()
-    val isLoadingCategorie by categoriaViewModel.isLoading.collectAsState()
 
+    // Carica i dati iniziali
     LaunchedEffect(Unit) {
         eventiViewModel.getAllEventi()
-        categoriaViewModel.getAllCategorie()
-        wishlistViewModel.getWishlistsByUtenteAndVisibilita(userData?.id ?: -1L, Visibilita.PRIVATA)
+
+        // Carica la wishlist solo se l'utente è loggato
+        if (isUserLoggedIn) {
+            profileViewModel.loadUserProfile()
+        }
     }
 
-    val eventiFiltrati = remember(eventi, selectedCategoryId) {
-        if (selectedCategoryId != null) {
-            eventi?.filter { it.categoriaId == selectedCategoryId } ?: emptyList()
-        } else {
-            eventi ?: emptyList()
+    // Aggiorna la wishlist quando userData è disponibile
+    LaunchedEffect(userData?.id) {
+        if (isUserLoggedIn && userData?.id != null) {
+            wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                userData!!.id,
+                Visibilita.PRIVATA
+            )
         }
+    }
+
+    val eventiFiltrati = remember(eventi) {
+        eventi ?: emptyList()
     }
 
     Box(
@@ -122,23 +125,8 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-
             item {
                 EventraHeader()
-            }
-
-            item {
-                if (!categorie.isNullOrEmpty()) {
-                    CategorieEventraOneSection(
-                        categorie = categorie!!,
-                        selectedCategoryId = selectedCategoryId,
-                        onCategorySelected = { categoryId ->
-                            selectedCategoryId = if (selectedCategoryId == categoryId) null else categoryId
-                            categoryId?.let { eventiViewModel.getEventiByCategoria(it) }
-                                ?: eventiViewModel.getAllEventi()
-                        }
-                    )
-                }
             }
 
             item {
@@ -147,10 +135,10 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                         eventi = eventiFiltrati,
                         onEventClick = { eventoId ->
                             if (isUserLoggedIn) {
-                                selectedEventoId = eventoId
-                                showEventDetail = true
+                                onNavigateToEventDetail(eventoId)
                             } else {
-                                showLoginAlert = true}
+                                showLoginAlert = true
+                            }
                         }
                     )
                 }
@@ -175,35 +163,31 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                         items(eventiFiltrati) { evento ->
                             EventraEventCard(
                                 evento = evento,
-                                wishlistViewModel = wishlistViewModel,
+                                wishlistViewModel = if (isUserLoggedIn) wishlistViewModel else null,
                                 userData = userData,
                                 onClick = {
                                     if (isUserLoggedIn) {
-                                        selectedEventoId = evento.id
-                                        showEventDetail = true
+                                        onNavigateToEventDetail(evento.id)
                                     } else {
-                                        showLoginAlert = true}
+                                        showLoginAlert = true
+                                    }
                                 }
                             )
                         }
                     }
+                } else {
+                    // Card quando non ci sono eventi
+                    EmptyEventsCard()
                 }
             }
 
             item {
-                if (eventiFiltrati.isEmpty() && !isLoadingEventi) {
-                    EventEmptyState(
-                        message = if (selectedCategoryId != null)
-                            "Nessun evento per questa categoria"
-                        else
-                            "Nessun evento disponibile"
-                    )
-                }
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }
 
-        if (isLoadingEventi || isLoadingCategorie) {
+        // Loading indicator
+        if (isLoadingEventi) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -212,17 +196,7 @@ fun HomeScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             }
         }
 
-        // Event Detail Overlay - QUESTO DEVE ESSERE FUORI DAL LOADING
-        if (showEventDetail && selectedEventoId != null && isUserLoggedIn) {
-            EventDetailScreen(
-                eventoId = selectedEventoId!!,
-                onBackPressed = {
-                    showEventDetail = false
-                    selectedEventoId = null
-                },
-                wishlistViewModel = wishlistViewModel
-            )
-        }
+        // Alert per login richiesto
         if (showLoginAlert) {
             LoginRequiredAlert(
                 onDismiss = { showLoginAlert = false }
@@ -255,7 +229,7 @@ fun EventraHeader() {
         ) {
 
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.logoeventra),
                 contentDescription = "Logo Eventra",
                 modifier = Modifier
                     .height(120.dp)
@@ -304,7 +278,7 @@ fun EventiInEvidenzaCarousel(
     LaunchedEffect(eventiInEvidenza) {
         if (eventiInEvidenza.isNotEmpty()) {
             while (true) {
-                delay(5000) // 5 secondi
+                delay(5000)
                 currentIndex = (currentIndex + 1) % eventiInEvidenza.size
 
                 scrollState.animateScrollToItem(
@@ -334,7 +308,7 @@ fun EventiInEvidenzaCarousel(
                 color = EventraColors.TextDark
             )
 
-            // Indicatori di posizione
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -499,89 +473,8 @@ fun EventoInEvidenzaCard(
     }
 }
 
-@Composable
-fun CategorieEventraOneSection(
-    categorie: List<TagCategoriaData>,
-    selectedCategoryId: Long?,
-    onCategorySelected: (Long?) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 20.dp)
-    ) {
-        Text(
-            text = "Categorie",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = EventraColors.TextDark,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
 
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
-        ) {
-            items(categorie) { categoria ->
-                TicketOneCategoryChip(
-                    categoria = categoria,
-                    isSelected = selectedCategoryId == categoria.id,
-                    onClick = { onCategorySelected(categoria.id) }
-                )
-            }
-        }
-    }
-}
 
-@Composable
-fun TicketOneCategoryChip(
-    categoria: TagCategoriaData,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.05f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-    )
-
-    Card(
-        modifier = Modifier
-            .scale(scale)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(25.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                EventraColors.PrimaryOrange
-            else
-                EventraColors.CardWhite
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 8.dp else 2.dp
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = getCategorieIcone(categoria.nome ?: ""),
-                contentDescription = categoria.nome,
-                tint = if (isSelected) Color.White else EventraColors.PrimaryOrange,
-                modifier = Modifier.size(20.dp)
-            )
-
-            Text(
-                text = categoria.nome ?: "Categoria",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (isSelected) Color.White else EventraColors.TextDark
-            )
-        }
-    }
-}
 
 @Composable
 fun SectionHeader(title: String, eventiCount: Int) {
@@ -607,19 +500,19 @@ fun SectionHeader(title: String, eventiCount: Int) {
         }
     }
 }
-
 @Composable
 fun EventraEventCard(
     evento: EventoData,
     modifier: Modifier = Modifier,
     wishlistViewModel: WishlistViewModel? = null,
-    userData :  com.example.eventra.viewmodels.data.UtenteData?,
+    userData: com.example.eventra.viewmodels.data.UtenteData?,
     onClick: () -> Unit
 ) {
     var isPressed by remember { mutableStateOf(false) }
 
-    // Ottieni lo stato della wishlist dal ViewModel
-    val wishlistsByVisibilita by wishlistViewModel?.wishlistsByVisibilita?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
+    // Ottieni lo stato della wishlist dal ViewModel solo se è presente
+    val wishlistsByVisibilita by wishlistViewModel?.wishlistsByVisibilita?.collectAsState()
+        ?: remember { mutableStateOf(emptyList()) }
 
     // Controlla se l'evento è nella wishlist
     val isInWishlist = remember(wishlistsByVisibilita, evento.id) {
@@ -628,16 +521,16 @@ fun EventraEventCard(
         } ?: false
     }
 
-
-
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.98f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "card_scale"
     )
 
     val heartScale by animateFloatAsState(
         targetValue = if (isInWishlist) 1.2f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "heart_scale"
     )
 
     val baseUrl = "http://10.0.2.2:8080/images/"
@@ -700,55 +593,57 @@ fun EventraEventCard(
                     }
                 }
 
-                // Cuore per gestire la wishlist
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(10.dp)
-                        .size(36.dp)
-                        .background(
-                            Color.White.copy(alpha = 0.9f),
-                            shape = CircleShape
-                        )
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) {
-                            wishlistViewModel?.let { viewModel ->
-                                val wishlistId = viewModel.getFirstPrivateWishlistId()
-                                if (wishlistId != null) {
-                                    if (isInWishlist) {
-                                        // Rimuovi dalla wishlist
-                                        viewModel.removeEventoFromWishlist(wishlistId, evento.id) {
-
-                                            viewModel.getWishlistsByUtenteAndVisibilita(
-                                               userData?.id ?: -1L, Visibilita.PRIVATA)
-                                        }
-                                    } else {
-                                        // Aggiungi alla wishlist
-                                        viewModel.addEventoToWishlist(wishlistId, evento.id) {
-                                            // Ricarica le wishlist dopo l'aggiunta
-                                            viewModel.getWishlistsByUtenteAndVisibilita(
-                                                userData?.id ?: -1L, Visibilita.PRIVATA)
+                // Cuore per gestire la wishlist - solo se l'utente è loggato
+                if (wishlistViewModel != null && userData != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                            .size(36.dp)
+                            .background(
+                                Color.White.copy(alpha = 0.9f),
+                                shape = CircleShape
+                            )
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                // Gestione del click sul cuore
+                                wishlistViewModel.getFirstPrivateWishlistId(userData.id) { wishlistId ->
+                                    if (wishlistId != null) {
+                                        if (isInWishlist) {
+                                            // Rimuovi dalla wishlist
+                                            wishlistViewModel.removeEventoFromWishlist(wishlistId, evento.id) {
+                                                wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                                                    userData.id, Visibilita.PRIVATA
+                                                )
+                                            }
+                                        } else {
+                                            // Aggiungi alla wishlist
+                                            wishlistViewModel.addEventoToWishlist(wishlistId, evento.id) {
+                                                wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                                                    userData.id, Visibilita.PRIVATA
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isInWishlist) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (isInWishlist) "Rimuovi dalla wishlist" else "Aggiungi alla wishlist",
-                        tint = if (isInWishlist) EventraColors.PrimaryOrange else EventraColors.TextGray,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .scale(heartScale)
-                    )
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isInWishlist) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isInWishlist) "Rimuovi dalla wishlist" else "Aggiungi alla wishlist",
+                            tint = if (isInWishlist) EventraColors.PrimaryOrange else EventraColors.TextGray,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .scale(heartScale)
+                        )
+                    }
                 }
             }
 
-            // Resto del contenuto della card
+            // Contenuto della card
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -837,13 +732,14 @@ fun EventraEventCard(
 }
 
 @Composable
-fun EventEmptyState(message: String) {
+fun EmptyEventsCard() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = EventraColors.CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -852,7 +748,7 @@ fun EventEmptyState(message: String) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.EventBusy,
+                imageVector = Icons.Default.EventNote,
                 contentDescription = null,
                 tint = EventraColors.TextGray,
                 modifier = Modifier.size(64.dp)
@@ -861,9 +757,19 @@ fun EventEmptyState(message: String) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = message,
+                text = "Nessun evento disponibile",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = EventraColors.TextDark,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Al momento non ci sono eventi in programma. Torna presto per nuove opportunità!",
+                fontSize = 14.sp,
                 color = EventraColors.TextGray,
-                fontSize = 16.sp,
                 textAlign = TextAlign.Center
             )
         }

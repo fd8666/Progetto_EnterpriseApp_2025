@@ -2,7 +2,6 @@ package com.example.eventra.screens
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
-import android.service.autofill.UserData
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -30,13 +29,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -59,8 +56,6 @@ import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
-import com.example.eventra.viewmodels.data.UtenteData
-// Enum per i tipi di ricerca
 enum class SearchType {
     ALL,
     BY_NAME,
@@ -74,32 +69,31 @@ enum class SearchType {
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
+fun SearchScreen(
+    onNavigateToBiglietto: (Long) -> Unit = {},
+    onNavigateToEventDetail: (Long) -> Unit = {}
+) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
-
     val sessionManager = remember { SessionManager(context) }
     val isUserLoggedIn = remember { sessionManager.isLoggedIn() }
-
-    var showLoginAlert by remember { mutableStateOf(false) }
-
-
     val eventiViewModel: EventiViewModel = viewModel {
         EventiViewModel(context.applicationContext as android.app.Application)
     }
     val categoriaViewModel: TagCategoriaViewModel = viewModel {
         TagCategoriaViewModel(context.applicationContext as android.app.Application)
     }
-    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(context.applicationContext as android.app.Application) }
-    val userData by profileViewModel.userData.collectAsState()
-
-
+    val profileViewModel: ProfileViewModel = viewModel {
+        ProfileViewModel(context.applicationContext as android.app.Application)
+    }
+    val wishlistViewModel: WishlistViewModel? = if (isUserLoggedIn) {
+        viewModel { WishlistViewModel(context.applicationContext as android.app.Application) }
+    } else null
     val eventi by eventiViewModel.eventi.collectAsState()
     val eventiByCategoria by eventiViewModel.eventiByCategoria.collectAsState()
     val categorie by categoriaViewModel.categorie.collectAsState()
     val isLoading by eventiViewModel.isLoading.collectAsState()
-
-    // Stati di ricerca
+    val userData by profileViewModel.userData.collectAsState()
     var searchText by remember { mutableStateOf("") }
     var searchLocation by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
@@ -108,19 +102,21 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
     var showFilters by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
     var currentSearchType by remember { mutableStateOf(SearchType.ALL) }
-
-    var selectedEventoId by remember { mutableStateOf<Long?>(null) }
-    var showEventDetail by remember { mutableStateOf(false) }
-
+    var showLoginAlert by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         categoriaViewModel.getAllCategorie()
-
+        if (isUserLoggedIn) {
+            profileViewModel.loadUserProfile()
+        }
     }
-    val wishlistViewModel: WishlistViewModel = viewModel {
-        WishlistViewModel(context.applicationContext as android.app.Application)
+    LaunchedEffect(userData?.id) {
+        if (isUserLoggedIn && userData?.id != null && wishlistViewModel != null) {
+            wishlistViewModel.getWishlistsByUtenteAndVisibilita(
+                userData!!.id,
+                Visibilita.PRIVATA
+            )
+        }
     }
-
-
     fun determineSearchType(): SearchType {
         val hasName = searchText.isNotBlank()
         val hasLocation = searchLocation.isNotBlank()
@@ -129,7 +125,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         val hasEndDate = endDate != null
         val hasBothDates = hasStartDate && hasEndDate
         val hasOnlyStartDate = hasStartDate && !hasEndDate
-
         val activeFiltersCount = listOf(hasName, hasLocation, hasCategory, hasBothDates || hasOnlyStartDate).count { it }
 
         return when {
@@ -143,7 +138,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             else -> SearchType.ALL
         }
     }
-
     fun performSearch() {
         keyboardController?.hide()
 
@@ -181,6 +175,7 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             }
 
             SearchType.COMBINED -> {
+
                 eventiViewModel.searchEventiCombined(
                     nome = if (searchText.isNotBlank()) searchText.trim() else null,
                     luogo = if (searchLocation.isNotBlank()) searchLocation.trim() else null,
@@ -194,12 +189,14 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
         isSearchActive = true
     }
 
+
     fun getCurrentEventi(): List<EventoData>? {
         return when (currentSearchType) {
             SearchType.BY_CATEGORY -> eventiByCategoria
             else -> eventi
         }
     }
+
 
     fun clearAllFilters() {
         searchText = ""
@@ -220,12 +217,9 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Header con logo Eventra
             item {
                 SearchHeader()
             }
-
-            // Barre di ricerca
             item {
                 SearchSection(
                     searchText = searchText,
@@ -240,13 +234,12 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 FiltersToggle(
                     showFilters = showFilters,
                     onToggle = { showFilters = !showFilters },
-                    hasActiveFilters = searchText.isNotBlank() ||
-                            searchLocation.isNotBlank() ||
-                            selectedCategoryId != null ||
-                            startDate != null ||
-                            endDate != null
+
                 )
             }
+
+
+
 
             item {
                 AnimatedVisibility(
@@ -268,19 +261,8 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 }
             }
 
-            if (isSearchActive) {
-                item {
-                    SearchTypeIndicator(
-                        searchType = currentSearchType,
-                        searchText = searchText,
-                        searchLocation = searchLocation,
-                        selectedCategoryId = selectedCategoryId,
-                        categorie = categorie ?: emptyList(),
-                        startDate = startDate,
-                        endDate = endDate
-                    )
-                }
-            }
+
+
 
             if (isSearchActive) {
                 val currentEvents = getCurrentEventi()
@@ -308,12 +290,11 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                             items(currentEvents) { evento ->
                                 EventraEventCard(
                                     evento = evento,
-                                    userData = userData,
                                     wishlistViewModel = wishlistViewModel,
+                                    userData = userData,
                                     onClick = {
                                         if (isUserLoggedIn) {
-                                            selectedEventoId = evento.id
-                                            showEventDetail = true
+                                            onNavigateToEventDetail(evento.id)
                                         } else {
                                             showLoginAlert = true
                                         }
@@ -327,12 +308,15 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                         NoResultsCard(
                             searchType = currentSearchType,
                             onSuggestAction = {
+
                                 when (currentSearchType) {
                                     SearchType.BY_DATE_RANGE -> {
+
                                         endDate = null
                                         performSearch()
                                     }
                                     SearchType.BY_DATE_AFTER, SearchType.BY_NAME, SearchType.BY_LOCATION -> {
+
                                         clearAllFilters()
                                         eventiViewModel.getAllEventi()
                                         isSearchActive = true
@@ -377,7 +361,6 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }
-
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -386,105 +369,9 @@ fun SearchScreen(onNavigateToBiglietto: (Long) -> Unit = {}) {
                 LoadingIndicator()
             }
         }
-
-        // Event Detail Overlay
-        if (showEventDetail && selectedEventoId != null && isUserLoggedIn) {
-            EventDetailScreen(
-                eventoId = selectedEventoId!!,
-                onBackPressed = {
-                    showEventDetail = false
-                    selectedEventoId = null
-                },
-                wishlistViewModel = wishlistViewModel
-            )
-        }
         if (showLoginAlert) {
             LoginRequiredAlert(
                 onDismiss = { showLoginAlert = false }
-            )
-        }
-    }
-}
-
-@Composable
-fun SearchTypeIndicator(
-    searchType: SearchType,
-    searchText: String,
-    searchLocation: String,
-    selectedCategoryId: Long?,
-    categorie: List<TagCategoriaData>,
-    startDate: LocalDate?,
-    endDate: LocalDate?
-) {
-    val indicatorText = when (searchType) {
-        SearchType.ALL -> "Tutti gli eventi"
-        SearchType.BY_NAME -> "Eventi per nome: \"$searchText\""
-        SearchType.BY_LOCATION -> "Eventi in: \"$searchLocation\""
-        SearchType.BY_CATEGORY -> {
-            val categoryName = categorie.find { it.id == selectedCategoryId }?.nome ?: "Categoria"
-            "Eventi categoria: $categoryName"
-        }
-        SearchType.BY_DATE_RANGE -> {
-            val start = startDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: ""
-            val end = endDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: ""
-            "Eventi dal $start al $end"
-        }
-        SearchType.BY_DATE_AFTER -> {
-            val date = startDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: ""
-            "Eventi dopo il $date"
-        }
-        SearchType.COMBINED -> "Ricerca con filtri multipli"
-    }
-
-    val indicatorColor = when (searchType) {
-        SearchType.ALL -> EventraColors.TextGray
-        SearchType.BY_NAME -> Color(0xFF2196F3)
-        SearchType.BY_LOCATION -> Color(0xFF4CAF50)
-        SearchType.BY_CATEGORY -> Color(0xFF9C27B0)
-        SearchType.BY_DATE_RANGE, SearchType.BY_DATE_AFTER -> Color(0xFFFF9800)
-        SearchType.COMBINED -> EventraColors.PrimaryOrange
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = indicatorColor.copy(alpha = 0.1f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = when (searchType) {
-                    SearchType.ALL -> Icons.Default.List
-                    SearchType.BY_NAME -> Icons.Default.Search
-                    SearchType.BY_LOCATION -> Icons.Default.LocationOn
-                    SearchType.BY_CATEGORY -> Icons.Default.Category
-                    SearchType.BY_DATE_RANGE, SearchType.BY_DATE_AFTER -> Icons.Default.DateRange
-                    SearchType.COMBINED -> Icons.Default.FilterList
-                },
-                contentDescription = null,
-                tint = indicatorColor,
-                modifier = Modifier.size(16.dp)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Text(
-                text = indicatorText,
-                color = indicatorColor,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -508,15 +395,15 @@ fun SearchHeader() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp),
+                .padding(10.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.logoeventra),
                 contentDescription = "Logo Eventra",
                 modifier = Modifier
-                    .height(80.dp)
+                    .height(120.dp)
                     .wrapContentWidth(),
                 contentScale = ContentScale.Fit
             )
@@ -568,8 +455,6 @@ fun SearchSection(
                 fontWeight = FontWeight.Bold,
                 color = EventraColors.TextDark
             )
-
-
             SearchTextField(
                 value = searchText,
                 onValueChange = onSearchTextChange,
@@ -577,8 +462,6 @@ fun SearchSection(
                 leadingIcon = Icons.Default.Search,
                 onSearch = onSearch
             )
-
-
             SearchTextField(
                 value = searchLocation,
                 onValueChange = onSearchLocationChange,
@@ -586,8 +469,6 @@ fun SearchSection(
                 leadingIcon = Icons.Default.LocationOn,
                 onSearch = onSearch
             )
-
-
             Button(
                 onClick = onSearch,
                 modifier = Modifier
@@ -663,13 +544,10 @@ fun SearchTextField(
         keyboardActions = KeyboardActions(onSearch = { onSearch() }),
         singleLine = true
     )
-}
-
-@Composable
+}@Composable
 fun FiltersToggle(
     showFilters: Boolean,
-    onToggle: () -> Unit,
-    hasActiveFilters: Boolean = false
+    onToggle: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -678,13 +556,10 @@ fun FiltersToggle(
             .clickable { onToggle() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (hasActiveFilters)
-                EventraColors.PrimaryOrange.copy(alpha = 0.1f)
-            else
-                EventraColors.CardWhite
+            containerColor = EventraColors.CardWhite
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (hasActiveFilters) 6.dp else 4.dp
+            defaultElevation = 4.dp
         )
     ) {
         Row(
@@ -694,44 +569,37 @@ fun FiltersToggle(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
                 Icon(
                     imageVector = Icons.Default.FilterList,
                     contentDescription = null,
-                    tint = if (hasActiveFilters)
-                        EventraColors.PrimaryOrange
-                    else
-                        EventraColors.PrimaryOrange
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (hasActiveFilters) "Filtri Attivi" else "Filtri Avanzati",
-                    color = EventraColors.TextDark,
-                    fontSize = 16.sp,
-                    fontWeight = if (hasActiveFilters) FontWeight.Bold else FontWeight.Medium
+                    tint = EventraColors.TextGray,
+                    modifier = Modifier.size(20.dp)
                 )
 
-                if (hasActiveFilters) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(
-                                EventraColors.PrimaryOrange,
-                                CircleShape
-                            )
-                    )
-                }
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = "Filtri Avanzati",
+                    color = EventraColors.TextDark,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Icon(
                 imageVector = if (showFilters) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = null,
-                tint = EventraColors.PrimaryOrange
+                contentDescription = if (showFilters) "Nascondi filtri" else "Mostra filtri",
+                tint = EventraColors.PrimaryOrange,
+                modifier = Modifier.size(24.dp)
             )
         }
     }
 }
+
 
 @Composable
 fun FiltersSection(
@@ -757,7 +625,6 @@ fun FiltersSection(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-
             if (categorie.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -774,8 +641,6 @@ fun FiltersSection(
                     )
                 }
             }
-
-
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "Periodo",
@@ -803,8 +668,6 @@ fun FiltersSection(
                     )
                 }
             }
-
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -845,7 +708,6 @@ fun CategoryFilterSection(
     selectedCategoryId: Long?,
     onCategorySelected: (Long?) -> Unit
 ) {
-
     val allCategories = listOf(
         TagCategoriaData(id = -1, nome = "Tutte", descrizione = null)
     ) + categorie
@@ -871,6 +733,7 @@ fun CategoryFilterSection(
         }
     }
 }
+
 @Composable
 fun FilterCategoryChip(
     categoria: TagCategoriaData,
@@ -1058,8 +921,6 @@ fun NoResultsCard(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-
-
             Button(
                 onClick = onSuggestAction,
                 colors = ButtonDefaults.buttonColors(
@@ -1138,8 +999,6 @@ fun SearchPlaceholderCard(
         }
     }
 }
-
-
 fun getSearchTypeDescription(searchType: SearchType): String {
     return when (searchType) {
         SearchType.ALL -> "Ricerca generale"
@@ -1174,5 +1033,3 @@ fun getSuggestionButtonText(searchType: SearchType): String {
         SearchType.ALL -> "Ricarica"
     }
 }
-
-
